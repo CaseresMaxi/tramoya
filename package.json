@@ -1,0 +1,18 @@
+{
+  "name": "tramoya",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Presentaciones, videos y piezas gráficas en HTML estático, a partir de un mismo proyecto.",
+  "type": "module",
+  "scripts": {
+    "revisar": "node render/revisar.mjs",
+    "video": "node render/video.mjs",
+    "poster": "node render/poster.mjs",
+    "marca": "node render/marca.mjs",
+    "manifiesto": "python3 herramientas/generar_manifiesto.py",
+    "glifos": "python3 herramientas/generar_glifos.py"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.50.0"
+  }
+}

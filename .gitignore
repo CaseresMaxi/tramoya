@@ -1,0 +1,8 @@
+node_modules/
+# Renders y capturas de revisión. Si un proyecto quiere versionar sus entregables
+# (el MP4 final, el póster), que saque esta línea o los copie a otra carpeta.
+salida/
+.DS_Store
+*~
+.venv/
+__pycache__/

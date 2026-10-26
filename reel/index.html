@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reel</title>
+  <link rel="icon" href="../proyecto/assets/logo/favicon.svg" type="image/svg+xml" />
+  <script src="../nucleo/util.js"></script>
+  <script src="../proyecto/proyecto.js"></script>
+  <script>TRAMOYA.instalarFuentes();</script>
+</head>
+<body>
+  <script src="../nucleo/marca.js"></script>
+  <script src="../proyecto/glifos.js"></script>
+  <script src="reel.js"></script>
+  <script>
+    // Reel de ejemplo, 12 s a 120 BPM (un compás = 2 s): una barra se abre en franjas, las
+    // franjas se van y dejan palabras, un dato, el logo armándose, la bajada y, al final,
+    // todo se cierra en la barra del primer cuadro (así el loop no se nota).
+    //
+    // Los textos salen de PROYECTO.reel y los colores y el logo de la marca. Para otro reel,
+    // copiá este archivo y cambiá dibujar(): es una función pura del tiempo.
+    const U = TRAMOYA, P = PROYECTO, R = P.reel || {};
+    const { cl, lerp, prog, exOut, exIn, spring, speed, r2 } = U;
+    const tema = P.estilo?.tema || Object.keys(P.temas)[0];
+    const C = U.marca.cfgDe('', tema);
+    const COL = { bg: P.temas[tema].vars.bg, tinta: C.tinta, acento: C.acento, muted: P.temas[tema].vars.muted };
+    const PAL = R.palabras || ['Una', 'idea', 'en', 'movimiento.'];
+    const DATO = R.dato || { numero: 100, unidad: '%', texto: '' };
+
+    // Logo: isotipo por elementos (cada uno entra por su lado) y palabra aparte
+    let LOGO = null;
+    function logo() {
+      if (LOGO) return LOGO;
+      const word = U.marca.palabra(C), cap = word.cap, k = 190 / cap;
+      const iso = C.forma === 'ninguna' ? '' : U.marca.isotipo(C);
+      const elems = iso.match(/<(path|circle|rect)\b[^>]*\/>|<text\b[\s\S]*?<\/text>/g) || [];
+      const ih = iso ? cap * C.isoEscala * k : 0, gap = iso ? cap * C.separacion * k : 0, b = word.box;
+      const Wt = ih + gap + b.w * k, x0 = 960 - Wt / 2;
+      return (LOGO = { word, k, elems, ih, gap, x0, Wt, wx: x0 + ih + gap - b.x * k, wy: 540 + (cap * k) / 2, b });
+    }
+
+    TRAMOYA.reel({
+      titulo: `${U.plain(P.nombre)} — Reel`,
+      duracion: 12, bpm: R.bpm || 120, fondo: COL.bg,
+      partes: ['Gancho', 'Palabras', 'Dato', 'Logo', 'Bajada', 'Cierre'],
+
+      dibujar(t, h) {
+        const { CX, CY, BEAT, kick, blur, texto, medir } = h;
+        let s = '';
+
+        // 1 · 0–2 s · una barra crece y se abre en 2, después en 4
+        if (t < 2.4) {
+          const n = t < 0.5 ? 1 : t < 1 ? 2 : 4, prevN = t < 1 ? 1 : 2, tb = t < 0.5 ? 0 : t < 1 ? 0.5 : 1;
+          const slot = (i, m) => CX + ((i * m) / 4 - (m - 1) / 2) * (900 / m);
+          const salida = (tt) => exIn(prog(tt, 2.0, 0.35)) * 2200; // a los 2 s se van hacia la derecha
+          for (let i = 0; i < 4; i++) {
+            const a = slot(Math.floor((i * prevN) / 4), prevN), b2 = slot(Math.floor((i * n) / 4), n);
+            const x = (n === 1 ? CX : lerp(a, b2, exOut(prog(t, tb, 0.32)))) + salida(t) * (1 + i * 0.15);
+            const hgt = 620 * (1 + 0.06 * kick(t)), w = 54; // el primer cuadro es igual al último
+            const c = n === 1 || i === 0 || i === 3 ? COL.acento : COL.tinta;
+            s += `<rect x="${r2(x - w / 2)}" y="${r2(CY - hgt / 2)}" width="${w}" height="${r2(hgt)}" rx="6" fill="${c}"${blur(speed((tt) => salida(tt) * (1 + i * 0.15), t))}/>`;
+          }
+        }
+
+        // 2 · 2–4 s · una palabra por pulso; la anterior sube y se va
+        if (t >= 2 && t < 4.3) {
+          const j = Math.min(PAL.length - 1, Math.floor((t - 2) / BEAT));
+          [j - 1, j].forEach((i) => {
+            if (i < 0) return;
+            const t0 = 2 + i * BEAT, inn = exOut(prog(t, t0, 0.3)), out = i < j ? exOut(prog(t, t0 + BEAT, 0.3)) : exIn(prog(t, 4.0, 0.25));
+            const y = CY + 80 + 160 * (1 - inn) - 220 * out, last = i === PAL.length - 1;
+            s += `<g opacity="${r2(inn * (1 - out))}">${texto(PAL[i], CX, y, 230, last ? COL.acento : COL.tinta, { anchor: 'middle', italic: last })}</g>`;
+          });
+        }
+
+        // 3 · 4–6 s · el dato cuenta y se subraya
+        if (t >= 4 && t < 6.3) {
+          const n = Math.round(DATO.numero * spring(prog(t, 4.05, 0.9))), out = exIn(prog(t, 6.0, 0.25));
+          const str = String(n), size = 330, w = medir(String(DATO.numero), size), uw = medir(DATO.unidad || '', size * 0.4);
+          const x = CX - (w + uw) / 2, y = CY + 60 - 30 * (1 - exOut(prog(t, 4, 0.4)));
+          s += `<g opacity="${r2(exOut(prog(t, 4, 0.2)) * (1 - out))}" transform="translate(${r2(-900 * out)} 0)"${blur(speed((tt) => -900 * exIn(prog(tt, 6.0, 0.25)), t))}>`;
+          s += texto(str, x + w, y, size, COL.acento, { anchor: 'end' }) + texto(DATO.unidad || '', x + w + 10, y - size * 0.42, size * 0.4, COL.acento);
+          const line = 700 * exOut(prog(t, 4.6, 0.4));
+          s += `<rect x="${r2(CX - line / 2)}" y="${CY + 110}" width="${r2(line)}" height="8" rx="4" fill="${COL.tinta}"/>`;
+          const tw = exOut(prog(t, 5.0, 0.45));
+          s += `<clipPath id="cpDato"><rect x="0" y="${CY + 140}" width="${r2(1920 * tw)}" height="120"/></clipPath><g clip-path="url(#cpDato)">${texto(DATO.texto || '', CX, CY + 210, 54, COL.tinta, { anchor: 'middle', italic: true, weight: 500 })}</g></g>`;
+        }
+
+        // 4–6 · 6–12 s · el logo se arma, aparece la bajada y todo se cierra en la barra
+        if (t >= 6) {
+          const L = logo(), si = L.ih / 80;
+          const cierre = exIn(prog(t, 10.5, 0.7)), deriva = 1 + 0.02 * prog(t, 6, 4.5);
+          let g = '';
+          L.elems.forEach((el, i) => {
+            const dy = (i % 2 ? -1 : 1) * 900 * (1 - spring(prog(t, 6 + i * 0.1, 0.7), 8));
+            g += `<g transform="translate(0 ${r2(dy / si)})">${el}</g>`;
+          });
+          let lockup = `<g transform="translate(${r2(L.x0)} ${r2(CY - L.ih / 2)}) scale(${r2(si)})">${g}</g>`;
+          const ww = exOut(prog(t, 7.0, 0.5)), bx = L.wx + L.b.x * L.k;
+          lockup += `<clipPath id="cpWord"><rect x="${r2(bx - 10)}" y="0" width="${r2((L.b.w * L.k + 20) * ww)}" height="1080"/></clipPath>`;
+          lockup += `<g clip-path="url(#cpWord)"><g transform="translate(${r2(L.wx)} ${r2(L.wy)}) scale(${L.k.toFixed(5)})">${L.word.svg}</g></g>`;
+          // Bajada con barrido
+          const bj = R.bajada || '', bw = medir(bj, 50, { italic: true, weight: 500 }), wb = exOut(prog(t, 8.5, 0.5));
+          lockup += `<clipPath id="cpSub"><rect x="${r2(CX - bw / 2 - 10)}" y="${CY + 150}" width="${r2((bw + 20) * wb)}" height="90"/></clipPath><g clip-path="url(#cpSub)">${texto(bj, CX, CY + 215, 50, COL.tinta, { anchor: 'middle', italic: true, weight: 500, extra: 'fill-opacity=".75"' })}</g>`;
+          const sx = deriva * (1 - cierre), up = -40 * exOut(prog(t, 8.3, 0.6));
+          if (sx > 0.002) s += `<g transform="translate(${CX} ${r2(CY + up)}) scale(${r2(sx)} ${r2(deriva)}) translate(${-CX} ${-CY})"${blur(speed((tt) => exIn(prog(tt, 10.5, 0.7)) * 1500, t))}>${lockup}</g>`;
+          // La barra del primer cuadro: crece cuando el logo termina de cerrarse y queda igual que en t = 0
+          if (t > 11.0) {
+            const hgt = 620 * exOut(prog(t, 11.0, 0.4)) * (1 + 0.06 * kick(t));
+            s += `<rect x="${CX - 27}" y="${r2(CY - hgt / 2)}" width="54" height="${r2(hgt)}" rx="6" fill="${COL.acento}"/>`;
+          }
+        }
+        return s;
+      },
+
+      // Banda en código: bombo en cada pulso, un acorde por pulso, golpe en cada cambio y subida al cierre
+      async audio(ac, h) {
+        const S = TRAMOYA.reel.sonido, out = S.master(ac), ruido = S.ruido(ac);
+        const ACORDES = [[220, 261.6, 329.6], [174.6, 220, 261.6], [261.6, 329.6, 392], [196, 246.9, 293.7], [220, 261.6, 329.6], [174.6, 220, 261.6]];
+        for (let b = 0; b < h.DUR / h.BEAT; b++) {
+          const t0 = b * h.BEAT, bar = Math.floor(b / 4);
+          S.bombo(ac, out, t0, b % 4 === 0 ? 1 : 0.75);
+          S.acorde(ac, out, t0, ACORDES[bar % ACORDES.length], { vol: b % 4 === 0 ? 0.1 : 0.065, corte: bar === 3 ? 2600 : 1700 });
+        }
+        for (let t = h.BAR; t < h.DUR; t += h.BAR) S.golpe(ac, out, t, ruido, t === 6 || t === 10);
+        S.riser(ac, out, 8, 10, ruido);
+      },
+    });
+  </script>
+</body>
+</html>

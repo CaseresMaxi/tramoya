@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tramoya</title>
+  <link rel="icon" href="proyecto/assets/logo/favicon.svg" type="image/svg+xml" />
+  <script src="nucleo/util.js"></script>
+  <script src="proyecto/proyecto.js"></script>
+  <script>TRAMOYA.instalarFuentes(''); TRAMOYA.instalarTemas('body[data-theme]');</script>
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0; min-height:100vh; background:var(--bg); color:var(--text); font:17px/1.55 var(--font-body); display:grid; place-items:center; padding:48px 24px}
+    main{width:min(980px, 100%)}
+    header svg{height:64px; width:auto; display:block}
+    header p{color:var(--lead); font-size:20px; max-width:46ch; margin:22px 0 40px}
+    .grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px}
+    a.card{display:flex; flex-direction:column; gap:8px; padding:26px; border:1px solid var(--line); background:var(--panel); border-radius:20px; text-decoration:none; color:inherit; transition:border-color .2s, transform .2s}
+    a.card:hover{border-color:var(--accent); transform:translateY(-2px)}
+    a.card b{font:800 24px var(--font-display); color:var(--strong)}
+    a.card span{color:var(--muted); font-size:15px}
+    a.card code{color:var(--accent); font-size:13px}
+    footer{margin-top:40px; color:var(--muted); font-size:14px}
+    footer code{color:var(--text)}
+  </style>
+</head>
+<body>
+  <main>
+    <header><div id="logo"></div><p id="desc"></p></header>
+    <div class="grid">
+      <a class="card" href="motion/index.html"><b>Presentación</b><span>Una línea de tiempo con puntos clave: → avanza, ← rebobina. E abre el editor, C marca correcciones.</span><code>motion/</code></a>
+      <a class="card" href="reel/index.html"><b>Reel</b><span>Pieza corta a tempo, con música generada en código. Exportable a MP4.</span><code>reel/</code></a>
+      <a class="card" href="poster/index.html"><b>Póster</b><span>A1 (o cualquier A) con panel de parámetros y observaciones. PNG a 300 dpi y PDF.</span><code>poster/</code></a>
+      <a class="card" href="landing/index.html"><b>Landing</b><span>Una página con los mismos textos, temas y marca.</span><code>landing/</code></a>
+      <a class="card" href="marca/index.html"><b>Marca</b><span>Logo paramétrico: variantes, SVG, PNG y zip.</span><code>marca/</code></a>
+    </div>
+    <footer>Los datos del proyecto están en <code>proyecto/</code>. Para exportar: <code>npm install</code> y <code>node render/…</code> (ver README.md).</footer>
+  </main>
+  <script src="nucleo/marca.js"></script>
+  <script src="proyecto/glifos.js"></script>
+  <script>
+    const U = TRAMOYA, P = PROYECTO;
+    document.title = U.plain(P.nombre);
+    document.body.dataset.theme = P.estilo?.tema || Object.keys(P.temas)[0];
+    document.getElementById('desc').textContent = P.descripcion || '';
+    window.ready = U.fuentesListas().then(() => { document.getElementById('logo').innerHTML = U.marca.buildSVG({ ...U.marca.cfgDe('tema', document.body.dataset.theme), layout: 'horizontal', margen: 0 }, { background: null }).svg; return true; });
+  </script>
+</body>
+</html>

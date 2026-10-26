@@ -1,0 +1,29 @@
+{
+  "palabra": "Tra*moya*",
+  "layout": "horizontal",
+  "isoEscala": 1.25,
+  "separacion": 0.4,
+  "margen": 8,
+  "tinta": "#ffffff",
+  "acento": "#ffffff",
+  "colorPalabra": "tinta",
+  "forma": "franjas",
+  "n": 4,
+  "grosor": 9,
+  "inclinacion": 5,
+  "colorFranjas": "bandera",
+  "radio": 3,
+  "iniciales": "",
+  "fondo": "#0d0d0f",
+  "fondoExport": "transparente",
+  "lienzo": "ajustado",
+  "radioFondo": 0,
+  "peso": 800,
+  "tracking": -20,
+  "nombre": "mono blanco",
+  "claro": {
+    "tinta": "#000000",
+    "acento": "#000000",
+    "fondo": "#ffffff"
+  }
+}
