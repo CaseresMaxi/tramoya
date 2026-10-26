@@ -21,6 +21,7 @@
 //   data-shape  cómo viaja: text (se escala, por defecto) | bar (barra de un punto) | box (tarjeta) | img (foto)
 //   data-par    paralaje durante el movimiento de cámara (1 = se mueve con la escena)
 //   data-dim    se atenúa cuando entra el punto siguiente
+//   data-out    punto clave en el que se va (sale con un fundido)
 //   data-f      campo de la escena que muestra: con el editor abierto, un clic lo edita
 //
 // Para sumar tipos propios de un proyecto: proyecto/tipos.js (window.TIPOS_PROYECTO), mismo formato.

@@ -95,6 +95,7 @@ comunes (`.pad`, `.kicker`, `.points`, `.cards`, `.split2`, `.two`, …) están 
 | `data-shape` | Cómo viaja: `text` (por defecto), `bar` (la barra de un punto de lista), `box` (tarjeta, panel), `img` (foto) |
 | `data-par` | Paralaje durante el movimiento de cámara (1 = con la escena; 1,8 = más rápido; 0,45 = más lento) |
 | `data-dim` | Se atenúa cuando entra el punto siguiente |
+| `data-out` | Punto clave en el que se va: sirve para destacar una cosa por vez |
 | `data-f` | Campo que muestra: con el editor abierto, un clic lo edita |
 
 Claves que conviene repetir entre tipos para que haya morph: `kicker`, `titulo`,

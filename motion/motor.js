@@ -123,7 +123,7 @@
       const anims = [...el.querySelectorAll('[data-m]')].map((e, order) => {
         const kind = e.dataset.m, k = KIND[kind] || {};
         return { e, kind, order, s: +e.dataset.s || 0, at: +e.dataset.at || 0, dur: +(e.dataset.dur || k.dur || 0.9), st: +(e.dataset.stagger || k.st || 0),
-          par: +(e.dataset.par || 1), dim: e.hasAttribute('data-dim'), parts: e._parts || null };
+          par: +(e.dataset.par || 1), dim: e.hasAttribute('data-dim'), out: e.dataset.out ? +e.dataset.out : null, parts: e._parts || null };
       });
       const steps = 1 + Math.max(0, ...anims.map((a) => a.s));
       const intro = Array.from({ length: steps }, (_, s) => anims.filter((a) => a.s === s)
@@ -278,6 +278,8 @@
       const xe = exOut(x); op *= 1 - xe; tr = `translate(${-od[0] * 90 * xe}px, ${-od[1] * 90 * xe}px) ` + tr;
     }
     if (a.dim && sc.stepStart[a.s + 1] !== undefined) op *= 1 - 0.55 * exOut(cl((T_ - sc.stepStart[a.s + 1]) / 0.5));
+    // data-out: se va del todo al empezar ese punto clave (para destacar una cosa por vez)
+    if (a.out !== null && sc.stepStart[a.out] !== undefined) op *= 1 - exOut(cl((T_ - sc.stepStart[a.out]) / 0.4));
     if (a.par !== 1) tr = `translate(${(sc.L.cam.tx * (a.par - 1)) / sc.L.s}px, ${(sc.L.cam.ty * (a.par - 1)) / sc.L.s}px) ` + tr;
     e.style.opacity = op; e.style.transform = tr; e.style.clipPath = clip; e.style.transformOrigin = '';
   }

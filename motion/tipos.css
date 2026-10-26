@@ -62,7 +62,7 @@ em{font-style:italic; color:var(--accent)}
 .links{position:absolute; left:0; top:0; width:1920px; height:1080px; overflow:visible; pointer-events:none}
 .links path{fill:none; stroke:var(--accent); stroke-width:3; stroke-opacity:.75}
 .links circle{fill:var(--accent-2)}
-.anota{position:absolute; left:140px; top:950px; margin:0; font-size:24px; color:var(--muted)}
+.anota{position:absolute; left:140px; top:905px; margin:0; font-size:24px; color:var(--muted)}
 .foot-note{position:absolute; bottom:0; left:0; font-size:24px; color:var(--muted); margin:0}
 
 /* Imagen partida */
