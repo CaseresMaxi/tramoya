@@ -8,7 +8,8 @@ https://polyformproject.org/licenses/noncommercial/1.0.0
 
 Gratis para uso no comercial (personal, educativo, investigación, ONG, entes públicos).
 Para usarlo en una empresa, en trabajo pago para clientes o dentro de un producto, hace
-falta una licencia comercial: https://github.com/CaseresMaxi/tramoya/blob/main/COMERCIAL.md
+falta una licencia comercial: escribí a maxycaseres5@gmail.com
+(condiciones: https://github.com/CaseresMaxi/tramoya/blob/main/COMERCIAL.md).
 
 Lo que hagas con Tramoya (tus textos, imágenes, videos y pósters en proyecto/ y salida/)
 es tuyo. Las tipografías de estilos/*/fuentes/ siguen bajo la SIL OFL 1.1 de sus autores.

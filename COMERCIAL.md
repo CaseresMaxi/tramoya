@@ -25,8 +25,9 @@ Si tenés dudas sobre si tu caso es comercial, preguntá: la respuesta es rápid
 
 ## Cómo pedirla
 
-1. Abrí el formulario **[Pedir licencia comercial](https://github.com/CaseresMaxi/tramoya/issues/new?template=licencia-comercial.yml)**
-   (o escribime por mi perfil: [github.com/CaseresMaxi](https://github.com/CaseresMaxi)).
+1. Escribime a **[maxycaseres5@gmail.com](mailto:maxycaseres5@gmail.com?subject=Licencia%20comercial%20de%20Tramoya)**, o, si no
+   te importa que sea público, abrí el formulario
+   **[Pedir licencia comercial](https://github.com/CaseresMaxi/tramoya/issues/new?template=licencia-comercial.yml)**.
 2. Contá quién sos, para qué lo vas a usar y cuántas personas lo van a usar.
 3. Acordamos precio y condiciones (por proyecto, anual o a medida) y te mando la licencia
    por escrito.

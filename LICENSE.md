@@ -1,6 +1,6 @@
 Required Notice: Copyright 2026 CaseresMaxi (https://github.com/CaseresMaxi)
 
-Required Notice: Uso comercial: solo con licencia comercial del autor. Ver COMERCIAL.md o https://github.com/CaseresMaxi/tramoya/issues/new?template=licencia-comercial.yml
+Required Notice: Uso comercial: solo con licencia comercial del autor. Contacto: maxycaseres5@gmail.com · condiciones en COMERCIAL.md
 
 Las tipografías de motor/estilos/*/fuentes/ son de sus autores, bajo la SIL Open Font
 License 1.1 (ver el LICENCIAS.md de cada estilo), y motor/nucleo/vendor/qrcode.js es

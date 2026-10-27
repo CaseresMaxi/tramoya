@@ -1,5 +1,8 @@
 blank_issues_enabled: true
 contact_links:
+  - name: Licencia comercial por email (privado)
+    url: mailto:maxycaseres5@gmail.com?subject=Licencia%20comercial%20de%20Tramoya
+    about: Para acordar el uso comercial sin abrir un issue público.
   - name: Uso comercial · condiciones
     url: https://github.com/CaseresMaxi/tramoya/blob/main/COMERCIAL.md
     about: Qué usos son gratis y cuáles necesitan licencia comercial.

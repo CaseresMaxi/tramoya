@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         Tramoya es gratis para uso no comercial ([PolyForm Noncommercial 1.0.0](https://github.com/CaseresMaxi/tramoya/blob/main/LICENSE.md)). Para uso comercial acordamos una licencia: completá esto y te respondo con una propuesta. Ver [COMERCIAL.md](https://github.com/CaseresMaxi/tramoya/blob/main/COMERCIAL.md).
-        **Este issue es público**: no pongas datos sensibles. Si preferís hablar en privado, dejá solo cómo contactarte.
+        **Este issue es público**: no pongas datos sensibles. Si preferís hablar en privado, escribime a maxycaseres5@gmail.com.
   - type: input
     id: quien
     attributes:

@@ -175,7 +175,8 @@ entes públicos), bajo la [PolyForm Noncommercial 1.0.0](LICENSE.md).
 **El uso comercial necesita una licencia comercial**, con precio a acordar. Es uso
 comercial usarlo en o para una empresa, en trabajo pago para clientes (freelance o
 agencia), o dentro de un producto o servicio. Condiciones en [COMERCIAL.md](COMERCIAL.md);
-la licencia se pide [acá](https://github.com/CaseresMaxi/tramoya/issues/new?template=licencia-comercial.yml).
+la licencia se pide escribiendo a [maxycaseres5@gmail.com](mailto:maxycaseres5@gmail.com?subject=Licencia%20comercial%20de%20Tramoya)
+o con [este formulario](https://github.com/CaseresMaxi/tramoya/issues/new?template=licencia-comercial.yml).
 
 Lo que hagas con Tramoya (tus textos, imágenes y piezas exportadas) es tuyo. Para
 aportar, ver [CONTRIBUTING.md](CONTRIBUTING.md).
