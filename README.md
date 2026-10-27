@@ -53,6 +53,8 @@ La próxima vez: doble clic en **Abrir estudio** dentro de `tramoya/` (`.command
 Sin servidor (doble clic en `index.html`) el tablero igual abre las piezas y la galería de
 estilos, y donde hace falta el servidor muestra el comando.
 
+**[▶ Ver el video explicativo](https://github.com/CaseresMaxi/tramoya-video/releases/latest/download/tramoya-explicado.mp4)** (4 min, hecho con Tramoya · [su proyecto](https://github.com/CaseresMaxi/tramoya-video)).
+
 ## Instalar la skill para tu agente
 
 ```bash
