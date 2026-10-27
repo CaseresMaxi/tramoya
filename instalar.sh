@@ -11,7 +11,10 @@
 set -euo pipefail
 
 REPO="${TRAMOYA_REPO:-https://github.com/CaseresMaxi/tramoya.git}"
-AQUI="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd || echo "")"
+# Con `curl | bash` no hay archivo: solo se usa la carpeta del script si existe de verdad
+FUENTE="${BASH_SOURCE[0]:-}"
+AQUI=""
+if [ -n "$FUENTE" ] && [ -f "$FUENTE" ]; then AQUI="$(cd "$(dirname "$FUENTE")" && pwd)"; fi
 
 command -v node >/dev/null || { echo "Falta Node 18 o más nuevo: https://nodejs.org" >&2; exit 1; }
 
