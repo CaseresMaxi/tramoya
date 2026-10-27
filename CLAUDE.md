@@ -1,57 +1,61 @@
 # Tramoya · contexto para Claude Code
 
-Plataforma y plantilla para presentaciones motion, reels, pósters, landings y marca en
-HTML/CSS/JS estático (se abre con el navegador, sin servidor ni build). Se escribe y se
-comenta en castellano rioplatense.
+Este repo **es la skill** Tramoya: presentaciones motion, reels, pósters, landings y marca
+en HTML/CSS/JS estático, cada pieza con su editor que guarda en archivos. Se escribe y se
+comenta en castellano rioplatense. `SKILL.md` es lo que lee un agente que la usa;
+este archivo es para trabajar *en* la skill.
 
-## Regla principal: motor y proyecto separados
-
-- `proyecto/` es lo único específico de un proyecto: `proyecto.js` (nombre, marca,
-  temas, fuentes, textos de póster/reel/landing), `escenas.js` (guion), `tipos.js`
-  (tipos de escena propios), `assets/`, y los generados `manifiesto.js` y `glifos.js`.
-- Todo lo demás es motor y tiene que seguir siendo agnóstico: nada de nombres, colores
-  ni textos de un proyecto en `nucleo/`, `motion/`, `reel/reel.js`, `poster/`,
-  `render/`. Si un proyecto necesita algo propio, va en `proyecto/` (un tipo en
-  `proyecto/tipos.js`, una variante en `marca.variantes`, un reel nuevo en otro .html).
-- Orden de carga en las páginas: `nucleo/util.js` → `proyecto/proyecto.js` →
-  `nucleo/marca.js` → el resto. Rutas de assets en los datos: relativas a las páginas
-  (`../proyecto/assets/…`).
-
-## Dónde está cada cosa
+## Estructura
 
 | Ruta | Qué es |
 |------|--------|
-| `motion/motor.js` | Línea de tiempo, cámara, morph, editor, correcciones, modo render |
-| `motion/tipos.js` + `tipos.css` | Tipos de escena del motor |
-| `nucleo/util.js` | Curvas, colores, texto (`md`, `lines`, `pairs`), localStorage con prefijo, fuentes y temas |
-| `nucleo/marca.js` | Logo paramétrico: `SCHEMA`, `cfgDe(variante, tema)`, `buildSVG`, `isoSVG` |
-| `nucleo/panel.js` | Formulario a partir de un esquema (marca y póster) |
-| `reel/reel.js` | Armazón de reels y sintetizadores para la banda |
-| `poster/poster.js` | Esquema del póster, exportación, observaciones |
-| `render/*.mjs` | Revisión, video, póster, marca (Playwright + Chrome headless) |
-| `docs/` | `aprendizajes.md` (por qué las cosas son como son), `motion.md` (referencia), `piezas.md` |
+| `SKILL.md` | Instrucciones para el agente que usa la skill (frontmatter `name`/`description`) |
+| `scripts/tramoya.mjs` | Entrada del CLI (y `bin` de `package.json`, para `npx github:…`); resuelve la ruta real e importa `motor/herramientas/tramoya.mjs` |
+| `motor/` | Lo que se copia a cada proyecto (`nuevo`, `actualizar`). Tiene que seguir siendo agnóstico |
+| `motor/herramientas/tramoya.mjs` | CLI + servidor local. Sin dependencias. `proyectoHTTP(P)` sirve un proyecto y su API en `<raíz>/__tramoya/*` (estado, subir, archivo, salidas, tarea, doctor, pendientes…); `abrir` lo monta en `/` y `estudio` monta N en `/p/<carpeta>/` con el inicio (`herramientas/estudio.html`) y `/__estudio/*` |
+| `motor/index.html` + `motor/tablero/` | Tablero del proyecto: piezas, estilo, pedidos al agente, editor de código (`codigo.js`, hecho a mano), salidas y llevar. Degrada sin servidor |
+| `motor/nucleo/util.js` | Curvas, colores, texto, **estado** (`leer`/`guardar`/`borrar`: `proyecto/estado.js` + localStorage + servidor), fuentes y temas |
+| `motor/motion/` · `reel/` · `poster/` · `landing/` · `marca/` | Cada pieza con su editor |
+| `motor/render/*.mjs` | Revisión, video, póster, marca (Playwright + Chrome headless) |
+| `motor/estilos/` | Galería: `<id>/estilo.js` + `fuentes/` (OFL) y `index.html`. Ningún estilo por defecto: sin elegir, el neutro de `util.js`. Formato y perillas en `referencias/estilos.md` |
+| `plantilla/proyecto/` | Proyecto de ejemplo que copia `nuevo` (solo contenido; el look sale del estilo) |
+| `referencias/` | Docs que el agente lee bajo demanda: `motion.md`, `piezas.md`, `estilos.md`, `aprendizajes.md` |
 
-## Cómo verificar
+## Reglas
 
-Siempre mirar el resultado en un navegador real antes de dar algo por hecho:
+- **Motor y proyecto separados**: nada de nombres, colores ni textos de un proyecto en
+  `motor/`. Lo propio de un proyecto va en su `proyecto/`.
+- **Orden de carga en las páginas**: `nucleo/util.js` → `proyecto/proyecto.js` →
+  `proyecto/estilo/estilo.js` → `proyecto/estado.js` → `nucleo/marca.js` → el resto. `util.js` lee `window.ESTADO`
+  en cada acceso porque `estado.js` carga después.
+- **Toda pieza editable guarda con `TRAMOYA.guardar(sub, v)`** y lee con
+  `TRAMOYA.leer(sub, def)`: así queda en `proyecto/estado/<sub>.json` con el servidor y
+  en localStorage sin él, y el render (`?render`) usa solo lo de archivos.
+- **La API cuelga de la raíz del proyecto** (`TRAMOYA.BASE` + `__tramoya`), nunca de `/`:
+  en el estudio cada proyecto vive en `/p/<carpeta>/`.
+- **Servidor**: solo `127.0.0.1`, rechaza otro `Host` y escrituras con otro `Origin`;
+  rutas siempre contra `P + sep`; el editor de código solo toca texto dentro de `proyecto/`.
+- **Contrato de render** (`window.ready`, `seek`, `DURACION`, `CLAVES`, `renderAudio`):
+  ver `motor/render/comun.mjs`.
 
-- `node render/revisar.mjs motion` → un PNG por punto clave en `salida/revision/` y
-  errores de consola (código 1 si hay). También `reel`, `poster --query`, `landing`,
-  `marca --query`, o cualquier `.html`.
-- Un instante puntual: `motion/index.html?escena=N&paso=M` o `?t=segundos`.
-- Necesita `npm install` (playwright-core) y Chrome del sistema. Sin `npm install`,
-  se puede apuntar a otro `node_modules` con `PLAYWRIGHT_DIR`.
+## Cómo probar
+
+No hay proyecto en la raíz: se prueba sobre uno generado.
+
+```bash
+node scripts/tramoya.mjs nuevo /tmp/t --nombre Prueba     # copia motor/ + plantilla/
+node scripts/tramoya.mjs revisar motion --en /tmp/t       # PNG por punto clave + consola (código 1 si hay errores)
+node scripts/tramoya.mjs estudio /tmp --sin-navegador     # inicio en /, tablero en /p/t/ (o `abrir --en /tmp/t`: uno solo en /)
+node scripts/tramoya.mjs actualizar --en /tmp/t           # después de tocar motor/
+```
+
+Para iterar sobre el motor sin copiar a cada rato: un proyecto con enlaces simbólicos a
+`motor/*` y a `plantilla/proyecto`, pero con `render/` **copiado** (Node resuelve el
+enlace y `RAIZ` quedaría en `motor/`). Siempre mirar los PNG antes de dar algo por
+hecho. `npm install` en `motor/` instala playwright-core (o `PLAYWRIGHT_DIR`).
 
 ## Correcciones del usuario
 
-Cuando el usuario pega correcciones de la presentación, cada una trae escena, paso,
-elemento, cita del texto y punto (x, y) en píxeles del escenario 1920 × 1080. Abrir
-ese cuadro (`?escena=N&paso=M`), mirar el punto, corregir y volver a capturar. Las del
-póster traen la parte y la posición en % del ancho y el alto.
-
-## Estado del navegador
-
-Lo editado vive en `localStorage` con el prefijo `PROYECTO.id`: `<id>-motion`,
-`<id>-marca-editor`, `<id>-poster-cfg`, `<id>-poster-obs`. No está en los archivos:
-si el usuario dice que "cambió algo", puede estar solo en su navegador (pedir el
-.json exportado o "Copiar como escenas.js").
+Cada corrección de la presentación trae escena, paso, elemento, cita y punto (x, y) en
+px del escenario 1920 × 1080; las del póster, parte y % del ancho y del alto. En un
+proyecto, `tramoya estado` las lista.

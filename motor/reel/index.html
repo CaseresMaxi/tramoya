@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reel</title>
+  <link rel="icon" href="../proyecto/assets/logo/favicon.svg" type="image/svg+xml" />
+  <script src="../nucleo/util.js"></script>
+  <script src="../proyecto/proyecto.js"></script>
+  <script src="../proyecto/estilo/estilo.js"></script>
+  <script src="../proyecto/estado.js"></script>
+  <script>TRAMOYA.instalarFuentes();</script>
+</head>
+<body>
+  <script src="../nucleo/marca.js"></script>
+  <script src="../nucleo/panel.js"></script>
+  <script src="../proyecto/manifiesto.js"></script>
+  <script src="../proyecto/glifos.js"></script>
+  <script src="reel.js"></script>
+  <script src="tipos.js"></script>
+  <script src="../proyecto/tipos.js"></script>
+  <script src="editor.js"></script>
+  <script>
+    // Reel editable: las partes, el tempo y la banda salen de PROYECTO.reel (o de lo editado,
+    // que se guarda con TRAMOYA.guardar('reel')). E abre el editor con la línea de tiempo.
+    //
+    // El de ejemplo dura 12 s a 120 BPM: una barra se abre en franjas, las franjas se van y
+    // dejan palabras, un dato, el logo armándose, la bajada y, al final, todo se cierra en la
+    // barra del primer cuadro (así el loop no se nota).
+    //
+    // Para un reel dibujado a mano (sin partes), ver el comentario de reel/reel.js.
+    TRAMOYA.reel.editable({ defecto: PROYECTO.reel });
+  </script>
+</body>
+</html>

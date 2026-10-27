@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Galería de estilos</title>
+  <link rel="icon" href="../proyecto/assets/logo/favicon.svg" type="image/svg+xml" />
+  <!-- Galería de estilos: cada carpeta de acá (y de proyecto/estilos/) es un estilo con su
+       estilo.js. Como desde file:// no se pueden listar carpetas, la lista sale de
+       proyecto/galeria.js (la escribe `tramoya regenerar`, `abrir` y `estilo`). Cada tarjeta
+       muestra la tipografía y la paleta del estilo y, al llegar a la pantalla, una escena real
+       de la presentación con ?estilo=<id>. -->
+  <script src="../nucleo/util.js"></script>
+  <script src="../proyecto/proyecto.js"></script>
+  <script src="../proyecto/estilo/estilo.js"></script>
+  <script src="../proyecto/estado.js"></script>
+  <script src="../proyecto/galeria.js"></script>
+  <style>
+    *{box-sizing:border-box}
+    html,body{margin:0; background:#0e0e10; color:#f4f1eb; font:14px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif}
+    a{color:inherit}
+    .wrap{width:min(1440px, calc(100% - 48px)); margin:0 auto}
+    header.top{border-bottom:1px solid #2b2b31; background:#131316; position:sticky; top:0; z-index:20}
+    header.top .wrap{display:flex; align-items:center; gap:18px; min-height:64px; flex-wrap:wrap; padding:10px 0}
+    header.top h1{font:700 19px/1 system-ui,sans-serif; margin:0; letter-spacing:-.01em}
+    header.top .elegido{color:#b7b1a7; font-size:13px}
+    header.top .elegido b{color:#d7a54a}
+    header.top .sp{flex:1}
+    .tr-btn{background:#24242a; color:#f4f1eb; border:1px solid #2b2b31; border-radius:9px; padding:7px 11px; font:inherit; font-size:13px; cursor:pointer; white-space:nowrap; text-decoration:none; display:inline-flex; align-items:center; gap:6px}
+    .tr-btn:hover{background:#2f2f36}
+    .tr-btn.on, .tr-btn.pri{background:#d7a54a; color:#111; border-color:#d7a54a}
+    .tr-btn.pri:hover{filter:brightness(1.08)}
+    .tr-btn.sm{padding:4px 9px; font-size:12px}
+    .tr-btn:disabled{opacity:.5; cursor:default}
+    h2.sec{font:700 11px/1 system-ui,sans-serif; letter-spacing:2px; text-transform:uppercase; color:#d7a54a; margin:34px 0 14px}
+    .intro{color:#b7b1a7; max-width:80ch; margin:22px 0 0}
+    .intro code, .hint code{background:#1b1b20; border:1px solid #2b2b31; border-radius:5px; padding:0 5px; font-size:12px}
+
+    /* Filtro */
+    .filtro{display:flex; flex-wrap:wrap; gap:6px; margin:18px 0 0}
+    .chip{background:#1b1b20; color:#b7b1a7; border:1px solid #2b2b31; border-radius:20px; padding:4px 11px; font:inherit; font-size:12px; cursor:pointer}
+    .chip:hover{color:#f4f1eb}
+    .chip.on{background:#d7a54a; color:#111; border-color:#d7a54a}
+    .filtro .chip.extra{display:none}
+    .filtro.todas .chip.extra, .filtro .chip.extra.on{display:inline-block}
+
+    /* Tarjetas */
+    .grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(400px, 1fr)); gap:18px; margin-top:20px}
+    .card{background:#16161a; border:1px solid #2b2b31; border-radius:14px; overflow:hidden; display:flex; flex-direction:column}
+    .card.elegido{border-color:#d7a54a; box-shadow:0 0 0 1px #d7a54a}
+    .card.oculta{display:none}
+    .vista{position:relative; aspect-ratio:16/9; overflow:hidden; background:var(--m-bg, #000); cursor:pointer}
+    .vista iframe{position:absolute; left:0; top:0; width:1920px; height:1080px; border:0; transform-origin:0 0; pointer-events:none; opacity:0; transition:opacity .4s}
+    .vista iframe.listo{opacity:1}
+    /* Muestra propia (se ve mientras carga la escena real, y si no carga) */
+    .muestra{position:absolute; inset:0; padding:7% 8%; display:flex; flex-direction:column; justify-content:center; gap:4%; background:var(--m-bg); color:var(--m-text)}
+    .muestra .k{font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--m-accent); font-weight:700}
+    .muestra .t{font-family:var(--m-display); font-size:clamp(26px, 3.2vw, 40px); line-height:1.05; color:var(--m-strong); letter-spacing:-.01em}
+    .muestra .t span{color:var(--m-accent)}
+    .muestra .p{font-family:var(--m-texto); font-size:13px; color:var(--m-muted); max-width:36ch}
+    .vista .badge{position:absolute; right:10px; top:10px; z-index:2; background:#d7a54a; color:#111; font-weight:700; font-size:11px; border-radius:20px; padding:3px 10px}
+    .vista .cargando{position:absolute; left:10px; bottom:8px; z-index:2; font-size:11px; color:#fff; background:rgba(0,0,0,.55); border-radius:20px; padding:2px 9px}
+    .info{padding:14px 16px 16px; display:grid; gap:10px; flex:1; align-content:start}
+    .info .fila{display:flex; align-items:baseline; gap:10px; justify-content:space-between}
+    .info h3{margin:0; font-size:17px}
+    .info .id{color:#8d877e; font:12px ui-monospace,Menlo,monospace}
+    .info p{margin:0; color:#b7b1a7; font-size:13px}
+    .tags{display:flex; flex-wrap:wrap; gap:5px}
+    .tags span{font-size:11px; color:#b7b1a7; background:#1f1f24; border-radius:10px; padding:1px 8px}
+    .tags span.propio{background:#3a2f17; color:#e1c685}
+    .paleta{display:flex; gap:4px; align-items:center}
+    .paleta i{width:20px; height:20px; border-radius:50%; border:1px solid rgba(255,255,255,.15); flex:none}
+    .temas{display:flex; gap:5px; flex-wrap:wrap}
+    .temas button{background:none; border:1px solid #2b2b31; color:#b7b1a7; border-radius:20px; padding:2px 9px 2px 4px; font:inherit; font-size:11.5px; cursor:pointer; display:inline-flex; align-items:center; gap:6px}
+    .temas button i{width:14px; height:14px; border-radius:50%; display:inline-block; border:1px solid rgba(255,255,255,.2)}
+    .temas button.on{border-color:#d7a54a; color:#f4f1eb}
+    .tipos{font-size:12px; color:#8d877e}
+    .tipos b{color:#d8d2c8; font-weight:600}
+    .acciones{display:flex; gap:6px; flex-wrap:wrap; margin-top:4px}
+    .probar{position:relative}
+    .probar .menu{display:none; position:absolute; left:0; bottom:calc(100% + 6px); background:#1b1b20; border:1px solid #2b2b31; border-radius:10px; padding:5px; z-index:5; min-width:170px; box-shadow:0 12px 30px rgba(0,0,0,.5)}
+    .probar.on .menu{display:grid}
+    .probar .menu a{padding:6px 10px; border-radius:6px; text-decoration:none; font-size:13px}
+    .probar .menu a:hover{background:#2a2a31}
+    details.ref{font-size:12px; color:#8d877e}
+    details.ref summary{cursor:pointer}
+
+    /* Comando para elegir sin servidor */
+    .aviso{background:#1b1b20; border:1px solid #3a3a42; border-radius:12px; padding:12px 14px; margin-top:16px; display:none}
+    .aviso.on{display:block}
+    .aviso pre{margin:8px 0; background:#0f0f12; border:1px solid #2b2b31; border-radius:8px; padding:8px 10px; font:13px ui-monospace,Menlo,monospace; overflow:auto}
+
+    /* Pedir un estilo */
+    .pedir{display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,1fr); gap:22px; background:#16161a; border:1px solid #2b2b31; border-radius:14px; padding:20px}
+    @media (max-width:900px){ .pedir{grid-template-columns:1fr} .grid{grid-template-columns:1fr} }
+    .field{display:grid; gap:5px; margin-bottom:12px}
+    .field > span{color:#b7b1a7; font-size:12px}
+    .field input[type=text], .field textarea, .field select{width:100%; background:#0f0f12; color:#f4f1eb; border:1px solid #2b2b31; border-radius:7px; padding:8px 9px; font:inherit; font-size:13px}
+    .field textarea{resize:vertical; line-height:1.45}
+    .hint{color:#8d877e; font-size:12px; line-height:1.5; margin:0}
+    .drop{border:1.5px dashed #3a3a42; border-radius:10px; padding:14px; text-align:center; color:#b7b1a7; font-size:13px; cursor:pointer}
+    .drop.sobre{border-color:#d7a54a; color:#f4f1eb}
+    .imgs{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px}
+    .imgs figure{margin:0; position:relative; width:84px; height:64px; border-radius:7px; overflow:hidden; border:1px solid #2b2b31; background:#0f0f12}
+    .imgs img{width:100%; height:100%; object-fit:cover; display:block}
+    .imgs button{position:absolute; right:2px; top:2px; background:rgba(0,0,0,.7); color:#fff; border:0; border-radius:50%; width:18px; height:18px; font-size:11px; line-height:18px; cursor:pointer; padding:0}
+    .pedidos{display:grid; gap:8px; align-content:start}
+    .ped{border:1px solid #2b2b31; border-radius:10px; background:#1b1b20; padding:10px 12px; font-size:13px}
+    .ped.hecho{opacity:.6}
+    .ped header{display:flex; justify-content:space-between; gap:8px; color:#8d877e; font-size:12px; margin-bottom:4px}
+    .ped header b{color:#e5484d}
+    .ped.hecho header b{color:#5fbf7a}
+    .ped p{margin:0; white-space:pre-wrap; color:#e8e3db}
+    .ped .links{margin-top:6px; display:grid; gap:2px; font-size:12px}
+    .ped .links a{color:#74acdf; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+    footer{color:#8d877e; font-size:12px; padding:40px 0 60px}
+  </style>
+</head>
+<body>
+  <header class="top"><div class="wrap">
+    <h1>Galería de estilos</h1>
+    <span class="elegido" id="elegido"></span>
+    <span class="sp"></span>
+    <a class="tr-btn" href="#pedir">Pedir un estilo</a>
+    <a class="tr-btn" href="../index.html">Portada</a>
+  </div></header>
+
+  <main class="wrap">
+    <p class="intro">Un estilo es el look completo del proyecto: tipografías, temas de color, forma de la marca, ritmo y transiciones de la presentación, y tempo y banda del reel. El contenido no cambia. Probalo en cualquier pieza antes de elegirlo; si ninguno te sirve, más abajo podés <a href="#pedir">pedir uno</a> pegando referencias de otros motion graphics.</p>
+    <div class="aviso" id="aviso"></div>
+    <div class="filtro" id="filtro"></div>
+    <div class="grid" id="grid"></div>
+
+    <h2 class="sec" id="pedir">Pedir un estilo</h2>
+    <div class="pedir">
+      <div>
+        <label class="field"><span>Qué look querés. Pegá prompts o descripciones de otros motion graphics, adjetivos, marcas o piezas que te gusten.</span>
+          <textarea id="pTexto" rows="7" placeholder="Ej.: «Kinetic typography, bold condensed sans, black and acid yellow, fast cuts on the beat, glitch transitions, film grain» · o: como los títulos de Stranger Things, pero más limpio"></textarea></label>
+        <label class="field"><span>Links de referencia (uno por línea): YouTube, Vimeo, Behance, Dribbble, una web…</span>
+          <textarea id="pLinks" rows="3" placeholder="https://vimeo.com/…"></textarea></label>
+        <label class="field"><span>Partir de un estilo de la galería (opcional)</span><select id="pBase"><option value="">— de cero —</option></select></label>
+        <div class="field"><span>Capturas o imágenes de referencia</span>
+          <div class="drop" id="drop">Soltá imágenes acá o hacé clic para elegirlas</div>
+          <input type="file" id="pFile" accept="image/*" multiple hidden>
+          <div class="imgs" id="pImgs"></div>
+          <p class="hint" id="pHintImg"></p>
+        </div>
+        <div class="acciones"><button class="tr-btn pri" id="pGuardar">Guardar el pedido</button><button class="tr-btn" id="pCopiar">Copiar para el chat</button></div>
+        <p class="hint" style="margin-top:10px">El pedido queda en <code>proyecto/estado/pedidos.json</code> (con <code>tramoya abrir</code>; si no, en este navegador). El agente lo ve con <code>tramoya estado</code>, arma el estilo en <code>proyecto/estilos/</code> y aparece en esta galería con la etiqueta <i>propio</i>.</p>
+      </div>
+      <div>
+        <div class="field"><span>Pedidos</span></div>
+        <div class="pedidos" id="pedidos"></div>
+      </div>
+    </div>
+    <footer>Los estilos de la galería viven en <code>estilos/&lt;id&gt;/</code>; los propios del proyecto, en <code>proyecto/estilos/&lt;id&gt;/</code>. Elegido, se copia a <code>proyecto/estilo/</code>. Formato y perillas: <code>referencias/estilos.md</code> de la skill.</footer>
+  </main>
+
+  <script>
+  (function () {
+    const U = window.TRAMOYA, $ = (id) => document.getElementById(id), esc = U.esc;
+    const G = window.GALERIA || { motor: [], proyecto: [] };
+    // El elegido es el que está en proyecto/estilo/ (ya se cargó arriba)
+    const elegidoDef = Object.values(U.ESTILOS).find((e) => /\/proyecto\/estilo\/$/.test(e.dir));
+    // (un propio se reconoce porque su id no está entre los de la galería del motor)
+    const idE = elegidoDef?.id;
+    let elegido = !idE ? null : G.motor.includes(idE) || !G.proyecto.includes(idE) ? idE : 'proyecto:' + idE;
+
+    // Cada estilo.js se carga en orden y se guarda con su clave (los propios llevan proyecto:)
+    const ESTILOS = [];
+    let ultimo = null;
+    const reg = U.registrarEstilo;
+    U.registrarEstilo = (d) => (ultimo = reg(d));
+    const cargar = (src) => new Promise((ok) => { ultimo = null; const s = document.createElement('script'); s.src = src; s.onload = () => ok(ultimo); s.onerror = () => ok(null); document.head.appendChild(s); });
+
+    async function iniciar() {
+      let lista = G;
+      if (!G.motor.length && !G.proyecto.length && (await U.servidor)) {
+        try { lista = await (await fetch(U.BASE + '__tramoya/galeria')).json(); if (lista.elegido) elegido = elegido || lista.elegido; } catch (e) {}
+      }
+      for (const id of lista.motor || []) { const e = await cargar(`${id}/estilo.js`); if (e) ESTILOS.push({ clave: id, propio: false, e }); }
+      for (const id of lista.proyecto || []) { const e = await cargar(`../proyecto/estilos/${id}/estilo.js`); if (e) ESTILOS.push({ clave: 'proyecto:' + id, propio: true, e }); }
+      if (!ESTILOS.length) {
+        $('grid').innerHTML = '<p class="hint">No hay estilos para mostrar: falta <code>proyecto/galeria.js</code>. Corré <code>tramoya regenerar</code> (o abrí el proyecto con <code>tramoya abrir</code>).</p>';
+      }
+      fuentes(); tarjetas(); filtro(); cabecera(); armarPedir();
+    }
+
+    // ---------- Fuentes: cada estilo con su familia propia (para no chocar entre estilos) ----------
+    const fam = (E, f) => `g-${E.clave.replace(/\W/g, '-')}-${f.familia.replace(/\W/g, '-')}`;
+    function fuentes() {
+      const css = ESTILOS.flatMap((E) => (E.e.fuentes || []).map((f) => `@font-face{font-family:'${fam(E, f)}';src:url('${f.url}') format('woff2');font-weight:${f.peso || '100 900'};font-style:${f.estilo || 'normal'};font-display:swap}`)).join('\n');
+      const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+    }
+    // La pila tipográfica del estilo, con sus familias renombradas
+    const pila = (E, pilaOrig) => {
+      let s = pilaOrig || 'system-ui, sans-serif';
+      (E.e.fuentes || []).forEach((f) => { s = s.split(`'${f.familia}'`).join(`'${fam(E, f)}'`); });
+      return s;
+    };
+    const primera = (p) => (p || '').split(',')[0].replace(/['"]/g, '').trim();
+
+    // ---------- Tarjetas ----------
+    const PIEZAS = [['motion', 'Presentación'], ['reel', 'Reel'], ['poster', 'Póster'], ['landing', 'Landing'], ['marca', 'Marca']];
+    const temaDe = (E) => (E.e.temas?.[E.e.motion?.tema] ? E.e.motion.tema : Object.keys(E.e.temas || {})[0]);
+    function tarjetas() {
+      $('grid').innerHTML = '';
+      ESTILOS.forEach((E) => {
+        const S = E.e, temas = S.temas || {}, T = S.tipografia || {};
+        E.tema = temaDe(E);
+        const v = temas[E.tema]?.vars || {};
+        const card = document.createElement('article');
+        card.className = 'card'; card.dataset.clave = E.clave;
+        card.style.cssText = Object.entries({ bg: v.bg, text: v.text, strong: v.strong, accent: v.accent, muted: v.muted }).map(([k, c]) => `--m-${k}:${c}`).join(';') + `;--m-display:${pila(E, T.display)};--m-texto:${pila(E, T.texto)}`;
+        const tags = [...(E.propio ? ['<span class="propio">propio</span>'] : []), ...(S.etiquetas || []).map((t) => `<span>${esc(t)}</span>`)].join('');
+        card.innerHTML = `
+          <div class="vista" title="Abrir la presentación con este estilo">
+            <div class="muestra"><div class="k">Antetítulo</div><div class="t" style="font-weight:${T.peso || 800}; ${T.mayusculas ? 'text-transform:uppercase;' : ''}">Una idea, <span style="font-style:${T.italica === false ? 'normal' : 'italic'}">muchas</span> piezas.</div><div class="p">Presentación, reel, póster y landing desde los mismos datos.</div></div>
+            <span class="cargando">cargando la escena…</span>
+          </div>
+          <div class="info">
+            <div class="fila"><h3>${esc(S.nombre || S.id)}</h3><span class="id">${esc(E.clave)}</span></div>
+            <p>${esc(S.descripcion || '')}</p>
+            <div class="tags">${tags}</div>
+            <div class="tipos">Títulos <b>${esc(primera(T.display) || 'del sistema')}</b> · texto <b>${esc(primera(T.texto) || 'del sistema')}</b>${S.motion ? ` · ${esc(S.motion.transicion || 'franjas')}, ${esc(S.motion.entrada || 'expo')}` : ''}${S.reel?.bpm ? ` · ${S.reel.bpm} BPM` : ''}</div>
+            <div class="temas">${Object.entries(temas).map(([k, t]) => `<button data-tema="${esc(k)}" class="${k === E.tema ? 'on' : ''}" title="Ver con este tema"><i style="background:${t.vars.bg}; box-shadow:inset -5px 0 0 ${t.vars.accent}"></i>${esc(t.nombre || k)}</button>`).join('')}</div>
+            <div class="paleta" data-paleta></div>
+            ${S.referencia ? `<details class="ref"><summary>Referencia de la que sale</summary><p>${esc(S.referencia)}</p></details>` : ''}
+            <div class="acciones">
+              <button class="tr-btn pri" data-elegir>Elegir este estilo</button>
+              <span class="probar"><button class="tr-btn" data-probar>Probar en… ▾</button><span class="menu">${PIEZAS.map(([p, n]) => `<a target="_blank" data-pieza="${p}">${n}</a>`).join('')}</span></span>
+            </div>
+          </div>`;
+        $('grid').appendChild(card);
+        paleta(card, E); enlaces(card, E);
+        card.querySelector('.temas').onclick = (ev) => {
+          const b = ev.target.closest('button'); if (!b) return;
+          E.tema = b.dataset.tema;
+          card.querySelectorAll('.temas button').forEach((x) => x.classList.toggle('on', x === b));
+          const vv = temas[E.tema].vars;
+          Object.entries({ bg: vv.bg, text: vv.text, strong: vv.strong, accent: vv.accent, muted: vv.muted }).forEach(([k, c]) => card.style.setProperty('--m-' + k, c));
+          paleta(card, E); enlaces(card, E);
+          if (E.iframe) { E.iframe.classList.remove('listo'); E.iframe.remove(); E.iframe = null; encolar(E, card); }
+        };
+        card.querySelector('[data-elegir]').onclick = () => elegir(E);
+        const pr = card.querySelector('.probar');
+        card.querySelector('[data-probar]').onclick = (ev) => { ev.stopPropagation(); document.querySelectorAll('.probar.on').forEach((x) => x !== pr && x.classList.remove('on')); pr.classList.toggle('on'); };
+        card.querySelector('.vista').onclick = () => window.open(url(E, 'motion'), '_blank');
+        vistas.observe(card);
+      });
+      marcar();
+    }
+    document.addEventListener('click', () => document.querySelectorAll('.probar.on').forEach((x) => x.classList.remove('on')));
+    function paleta(card, E) {
+      const v = E.e.temas[E.tema].vars;
+      card.querySelector('[data-paleta]').innerHTML = ['bg', 'panel', 'text', 'muted', 'accent', 'accent-2', 'line'].map((k) => `<i title="${k} ${v[k]}" style="background:${v[k]}"></i>`).join('');
+    }
+    const url = (E, pieza, extra = '') => `../${pieza}/index.html?estilo=${encodeURIComponent(E.clave)}&tema=${encodeURIComponent(E.tema)}${extra}`;
+    function enlaces(card, E) { card.querySelectorAll('[data-pieza]').forEach((a) => { a.href = url(E, a.dataset.pieza); }); }
+
+    // ---------- Escena real, perezosa: un iframe por vez, solo para las tarjetas a la vista ----------
+    const cola = [];
+    let activos = 0;
+    const vistas = new IntersectionObserver((es) => es.forEach((en) => {
+      if (!en.isIntersecting) return;
+      vistas.unobserve(en.target);
+      const E = ESTILOS.find((x) => x.clave === en.target.dataset.clave);
+      if (E) encolar(E, en.target);
+    }), { rootMargin: '200px' });
+    function encolar(E, card) { cola.push([E, card]); bombear(); }
+    function bombear() {
+      while (activos < 2 && cola.length) {
+        const [E, card] = cola.shift();
+        activos++;
+        const box = card.querySelector('.vista'), f = document.createElement('iframe');
+        const k = box.clientWidth / 1920;
+        f.style.transform = `scale(${k})`;
+        f.setAttribute('tabindex', '-1'); f.setAttribute('aria-hidden', 'true');
+        let hecho = false;
+        const fin = () => { if (hecho) return; hecho = true; activos--; card.querySelector('.cargando')?.remove(); bombear(); };
+        // Se da por cargada un rato después del load: las fuentes y la escena tardan un poco más
+        f.onload = () => setTimeout(() => { f.classList.add('listo'); fin(); }, 900);
+        setTimeout(fin, 8000);
+        f.src = url(E, 'motion', '&ui=0&escena=2');
+        box.appendChild(f);
+        E.iframe = f;
+      }
+    }
+    addEventListener('resize', () => document.querySelectorAll('.vista iframe').forEach((f) => { f.style.transform = `scale(${f.parentElement.clientWidth / 1920})`; }));
+
+    // ---------- Filtro por etiquetas ----------
+    let filtroOn = new Set();
+    function filtro() {
+      const cuenta = {};
+      ESTILOS.forEach((E) => [...(E.propio ? ['propio'] : []), ...(E.e.etiquetas || [])].forEach((t) => { cuenta[t] = (cuenta[t] || 0) + 1; }));
+      const tags = Object.keys(cuenta).sort((a, b) => cuenta[b] - cuenta[a] || a.localeCompare(b));
+      if (!tags.length) return;
+      // Las etiquetas que comparten varios estilos (y "propio") a la vista; las demás, detrás de "más"
+      const extra = (t) => cuenta[t] < 2 && t !== 'propio';
+      $('filtro').innerHTML = `<button class="chip on" data-t="">Todos (${ESTILOS.length})</button>` + tags.map((t) => `<button class="chip${extra(t) ? ' extra' : ''}" data-t="${esc(t)}">${esc(t)} · ${cuenta[t]}</button>`).join('')
+        + (tags.some(extra) ? '<button class="chip" data-mas>más etiquetas…</button>' : '');
+      $('filtro').onclick = (ev) => {
+        if (ev.target.closest('[data-mas]')) { $('filtro').classList.toggle('todas'); ev.target.textContent = $('filtro').classList.contains('todas') ? 'menos' : 'más etiquetas…'; return; }
+        const b = ev.target.closest('.chip'); if (!b) return;
+        const t = b.dataset.t;
+        if (!t) filtroOn.clear(); else filtroOn.has(t) ? filtroOn.delete(t) : filtroOn.add(t);
+        $('filtro').querySelectorAll('.chip[data-t]').forEach((c) => c.classList.toggle('on', c.dataset.t ? filtroOn.has(c.dataset.t) : !filtroOn.size));
+        ESTILOS.forEach((E) => {
+          const tg = new Set([...(E.propio ? ['propio'] : []), ...(E.e.etiquetas || [])]);
+          document.querySelector(`.card[data-clave="${CSS.escape(E.clave)}"]`).classList.toggle('oculta', ![...filtroOn].every((t) => tg.has(t)));
+        });
+      };
+    }
+
+    // ---------- Elegir ----------
+    function cabecera() {
+      const E = ESTILOS.find((x) => x.clave === elegido);
+      $('elegido').innerHTML = elegido ? `Estilo del proyecto: <b>${esc(E?.e.nombre || elegido)}</b>` : 'Este proyecto <b>todavía no tiene estilo</b> (usa el neutro): elegí uno.';
+    }
+    function marcar() {
+      document.querySelectorAll('.card').forEach((c) => {
+        const on = c.dataset.clave === elegido;
+        c.classList.toggle('elegido', on);
+        c.querySelector('.vista .badge')?.remove();
+        if (on) c.querySelector('.vista').insertAdjacentHTML('beforeend', '<span class="badge">Elegido</span>');
+        const b = c.querySelector('[data-elegir]'); b.textContent = on ? 'Es el elegido' : 'Elegir este estilo'; b.disabled = on;
+      });
+    }
+    let recienElegido = false;
+    // Lo que se recarga solo (con tramoya abrir): no hace falta recargar por el estilo que eligió esta página
+    U.alCambiarProyecto = (ev) => { if (recienElegido && /estilo/.test(ev.archivo || '')) { recienElegido = false; return false; } };
+    async function elegir(E) {
+      if (await U.servidor) {
+        try {
+          recienElegido = true;
+          const r = await fetch(U.BASE + '__tramoya/estilo', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: E.clave }) });
+          if (!r.ok) throw new Error(await r.text());
+          elegido = E.clave; marcar(); cabecera(); $('aviso').classList.remove('on');
+          U.toast(`Estilo «${E.e.nombre}» elegido: las piezas abiertas se recargan con él`);
+        } catch (e) { recienElegido = false; U.toast('No se pudo elegir: ' + e.message); }
+        return;
+      }
+      // Sin servidor: el comando para la terminal (o para pedírselo al agente)
+      const cmd = `node herramientas/tramoya.mjs estilo ${E.clave}`;
+      $('aviso').innerHTML = `<b>Para elegir «${esc(E.e.nombre)}»</b> hace falta escribir en el proyecto. Corré en la carpeta del proyecto (o pedíselo al agente):<pre>${esc(cmd)}</pre><div class="acciones"><button class="tr-btn sm" id="cpCmd">Copiar el comando</button><span class="hint">Con <code>tramoya abrir</code>, este botón lo aplica directo.</span></div>`;
+      $('aviso').classList.add('on'); $('aviso').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      $('cpCmd').onclick = () => U.copiar(cmd, 'Comando copiado');
+    }
+
+    // ---------- Pedir un estilo ----------
+    let imagenes = [];
+    const pedidos = () => U.leer('pedidos', []) || [];
+    function armarPedir() {
+      ESTILOS.forEach((E) => $('pBase').add(new Option(E.e.nombre + (E.propio ? ' (propio)' : ''), E.clave)));
+      U.servidor.then((ok) => { $('pHintImg').innerHTML = ok ? 'Se guardan en <code>proyecto/assets/referencias/</code>.' : 'Para subir imágenes abrí el proyecto con <code>tramoya abrir</code>. Sin servidor, pegá las capturas en el chat o dejalas en <code>proyecto/assets/referencias/</code> y nombralas acá.'; });
+      $('drop').onclick = () => $('pFile').click();
+      $('pFile').onchange = (e) => { subir([...e.target.files]); e.target.value = ''; };
+      $('drop').ondragover = (e) => { e.preventDefault(); $('drop').classList.add('sobre'); };
+      $('drop').ondragleave = () => $('drop').classList.remove('sobre');
+      $('drop').ondrop = (e) => { e.preventDefault(); $('drop').classList.remove('sobre'); subir([...e.dataTransfer.files].filter((f) => f.type.startsWith('image/'))); };
+      // También se puede pegar una captura con Ctrl+V sobre el texto
+      $('pTexto').addEventListener('paste', (e) => { const fs = [...(e.clipboardData?.files || [])].filter((f) => f.type.startsWith('image/')); if (fs.length) { e.preventDefault(); subir(fs); } });
+      $('pGuardar').onclick = guardarPedido;
+      $('pCopiar').onclick = () => { const p = armar(); if (p) U.copiar(textoPedido(p), 'Pedido copiado: pegalo en el chat'); };
+      listar();
+    }
+    async function subir(files) {
+      for (const f of files) {
+        try { const ruta = await U.subirArchivo(f, 'referencias'); imagenes.push(ruta); }
+        catch (e) { U.toast(e.message); break; }
+      }
+      verImagenes();
+    }
+    function verImagenes() {
+      $('pImgs').innerHTML = imagenes.map((r, i) => `<figure><img src="${esc(r)}" alt=""><button data-i="${i}" title="Quitar">×</button></figure>`).join('');
+      $('pImgs').querySelectorAll('button').forEach((b) => { b.onclick = () => { imagenes.splice(+b.dataset.i, 1); verImagenes(); }; });
+    }
+    function armar() {
+      const texto = $('pTexto').value.trim(), links = U.lines($('pLinks').value), base = $('pBase').value;
+      if (!texto && !links.length && !imagenes.length) { U.toast('Escribí qué look querés, o sumá un link o una imagen'); return null; }
+      const bn = base ? ESTILOS.find((E) => E.clave === base)?.e.nombre || base : '';
+      return { id: 'p' + Date.now().toString(36), tipo: 'estilo', texto: texto + (base ? `\n\nPartir del estilo «${bn}» (${base}).` : ''), links, imagenes: [...imagenes], fecha: new Date().toISOString(), hecho: false, ...(base ? { base } : {}) };
+    }
+    const textoPedido = (p) => `Pedido de estilo para Tramoya:\n${p.texto}${p.links.length ? '\n\nReferencias:\n' + p.links.map((l) => '- ' + l).join('\n') : ''}${p.imagenes.length ? '\n\nImágenes: ' + p.imagenes.join(', ') : ''}`;
+    function guardarPedido() {
+      const p = armar(); if (!p) return;
+      const L = pedidos(); L.push(p);
+      U.guardar('pedidos', L);
+      $('pTexto').value = ''; $('pLinks').value = ''; $('pBase').value = ''; imagenes = []; verImagenes();
+      listar();
+      U.toast('Pedido guardado. Avisale al agente (o corré tramoya estado) para que lo arme.');
+    }
+    function listar() {
+      const L = pedidos().filter((p) => p.tipo === 'estilo').slice().reverse();
+      $('pedidos').innerHTML = L.length ? L.map((p) => `
+        <div class="ped ${p.hecho ? 'hecho' : ''}" data-id="${esc(p.id)}">
+          <header><span><b>${p.hecho ? 'Hecho' : 'Pendiente'}</b> · ${esc((p.fecha || '').slice(0, 10))}${p.estilo ? ` · <code>${esc(p.estilo)}</code>` : ''}</span>${p.hecho ? '' : '<button class="tr-btn sm" data-borrar>Borrar</button>'}</header>
+          <p>${esc(p.texto || '')}</p>
+          ${p.links?.length ? `<div class="links">${p.links.map((l) => `<a href="${esc(l)}" target="_blank" rel="noopener">${esc(l)}</a>`).join('')}</div>` : ''}
+          ${p.imagenes?.length ? `<div class="imgs">${p.imagenes.map((r) => `<figure><img src="${esc(r)}" alt=""></figure>`).join('')}</div>` : ''}
+        </div>`).join('') : '<p class="hint">Todavía no hay pedidos.</p>';
+      $('pedidos').querySelectorAll('[data-borrar]').forEach((b) => { b.onclick = () => {
+        const id = b.closest('.ped').dataset.id;
+        U.guardar('pedidos', pedidos().filter((p) => p.id !== id)); listar();
+      }; });
+    }
+
+    iniciar();
+  })();
+  </script>
+</body>
+</html>

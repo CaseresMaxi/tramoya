@@ -1,0 +1,137 @@
+/* Estilos de los tipos de escena de tipos.js. Todo en píxeles del escenario (1920 × 1080).
+   Las perillas del estilo (--titulo-peso, --radio, --kicker-*…, ver referencias/estilos.md)
+   llegan como variables; el segundo valor de cada var() es el de siempre, sin estilo. */
+
+.accent{color:var(--accent)}
+em{font-style:var(--acento-estilo, italic); color:var(--accent)}
+.kicker{display:flex; align-items:center; gap:18px; width:max-content; max-width:100%; color:var(--accent); font-family:var(--kicker-fuente, var(--font-body)); font-weight:var(--kicker-peso, 700); font-size:24px; letter-spacing:var(--kicker-interletra, .22em); text-transform:var(--kicker-caja, uppercase); margin-bottom:26px}
+.kicker i{display:var(--kicker-barra-display, block); width:var(--kicker-barra, 46px); height:6px; border-radius:calc(3px * var(--radio, 1)); background:var(--accent); flex:none}
+.scene h1, .scene h2, .scene h3{font-family:var(--font-display); color:var(--strong); margin:0; font-weight:var(--titulo-peso, 800); letter-spacing:var(--titulo-interletra, -.02em); text-transform:var(--titulo-caja, none); font-style:var(--titulo-estilo, normal)}
+.scene h2{font-size:84px; line-height:var(--titulo-alto, 1.04); max-width:21ch; text-wrap:balance}
+.scene h2.md{font-size:72px}
+.scene h2.wide{max-width:none}
+.scene h3{font-size:44px; margin-bottom:22px}
+.body{font-size:33px; line-height:1.45; font-weight:var(--texto-peso, 400); color:var(--lead); max-width:44ch; margin:30px 0 0}
+.pad{position:absolute; inset:110px 140px 130px}
+.pad.center{text-align:center; display:flex; flex-direction:column; align-items:center}
+.pad.center .kicker{margin-inline:auto}
+.numeral{display:var(--numeral, block); position:absolute; right:70px; bottom:-150px; font:var(--acento-estilo, italic) var(--titulo-peso, 800) 640px/1 var(--font-display); letter-spacing:-.05em; color:transparent; -webkit-text-stroke:2px var(--line); pointer-events:none}
+
+/* Logo */
+.logo-iso{display:inline-block; height:150px}
+.logo-iso svg, .logo-iso img{height:100%; width:auto; display:block}
+.logo-iso.big{height:200px}
+.lockup{display:flex; align-items:center; gap:46px}
+.lockup h1{white-space:nowrap; font-size:200px; line-height:1; letter-spacing:calc(var(--titulo-interletra, -.02em) * 2)}
+.lockup h1 .accent{color:var(--logo-acc, var(--accent))}
+
+/* Portada */
+.bg-photo{position:absolute; inset:0; overflow:hidden}
+.bg-photo img, .photo-half img{width:100%; height:100%; object-fit:cover; object-position:60% 55%}
+.bg-shade{position:absolute; inset:0; pointer-events:none; background:linear-gradient(90deg, var(--overlay) 0%, var(--overlay) 38%, transparent 85%), linear-gradient(0deg, var(--overlay), transparent 45%)}
+.cover{position:absolute; left:140px; bottom:150px; right:500px}
+.cover .sub{font-weight:var(--texto-peso, 400); font-size:38px; line-height:1.4; color:var(--lead); max-width:34ch; margin:36px 0 0}
+.meta{margin-top:46px; display:flex; flex-direction:column; gap:8px; font-size:24px; color:var(--muted)}
+.meta b{color:var(--strong); font-size:28px; font-weight:600}
+
+/* Listas: cada punto lleva una barra a la izquierda, que es la que viaja entre escenas */
+.pt{position:relative; padding-left:36px}
+.pt::before{content:""; display:var(--marcador, block); position:absolute; left:0; top:.18em; bottom:.18em; width:8px; border-radius:calc(4px * var(--radio, 1)); background:var(--accent)}
+.points{list-style:none; padding:0; margin:54px 0 0; display:grid; gap:26px; max-width:1500px}
+.points .pt{display:grid; grid-template-columns:76px 1fr; align-items:baseline; font-size:38px; line-height:1.35; color:var(--lead)}
+.points .num{font-family:var(--font-display); font-style:var(--acento-estilo, italic); color:var(--accent); font-size:40px}
+.points.sm .pt{font-size:31px; grid-template-columns:62px 1fr}
+.bullets{list-style:none; padding:0; margin:40px 0 0; display:grid; gap:22px}
+.bullets li{position:relative; padding-left:46px; font-size:31px; line-height:1.4; color:var(--lead)}
+.bullets li:not(.pt)::before{content:""; position:absolute; left:4px; top:.55em; width:14px; height:14px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 6px color-mix(in srgb, var(--accent) 22%, transparent)}
+.bullets li.pt{padding-left:36px}
+
+/* Tarjetas */
+.cards{display:grid; grid-template-columns:repeat(var(--cols, 3), 1fr); gap:26px; margin-top:60px}
+.card{border:var(--borde, 1px) solid var(--line); background:var(--panel); border-radius:calc(26px * var(--radio, 1)); box-shadow:var(--sombra, none); padding:36px 36px 40px; display:flex; flex-direction:column; gap:14px; min-height:230px}
+.card i{display:var(--marcador, block); width:42px; height:4px; background:var(--accent); border-radius:calc(4px * var(--radio, 1))}
+.card b{font-family:var(--font-display); font-weight:var(--titulo-peso, 700); text-transform:var(--titulo-caja, none); font-size:40px; color:var(--strong)}
+.card span{font-size:26px; line-height:1.4; color:var(--muted)}
+
+/* Flujo: columnas de bloques unidos por conectores */
+.abox{position:absolute; border-radius:calc(20px * var(--radio, 1)); background:var(--panel); border:calc(var(--borde, 1px) + 1px) solid var(--line); box-shadow:var(--sombra, none); padding:0 28px; display:flex; flex-direction:column; justify-content:center; gap:8px}
+.abox b{font-size:30px; font-weight:700; color:var(--strong)}
+.abox span{font-size:21px; color:var(--muted)}
+.abox.c0{border-color:var(--strong)}
+.abox.mid{border-color:var(--accent); background:color-mix(in srgb, var(--accent) 9%, var(--panel))}
+.abox.last{border-color:var(--accent-2)}
+.alabel{position:absolute; font-family:var(--kicker-fuente, var(--font-body)); font-size:18px; font-weight:var(--kicker-peso, 700); letter-spacing:var(--kicker-interletra, .2em); color:var(--muted); text-transform:var(--kicker-caja, uppercase)}
+.links{position:absolute; left:0; top:0; width:1920px; height:1080px; overflow:visible; pointer-events:none}
+.links path{fill:none; stroke:var(--accent); stroke-width:3; stroke-opacity:.75}
+.links circle{fill:var(--accent-2)}
+.anota{position:absolute; left:140px; top:905px; margin:0; font-size:24px; color:var(--muted)}
+.foot-note{position:absolute; bottom:0; left:0; font-size:24px; color:var(--muted); margin:0}
+
+/* Imagen partida */
+.photo-half{position:absolute; left:0; top:0; width:900px; height:1080px; overflow:hidden}
+.side{position:absolute; left:1000px; right:120px; top:150px}
+.side h2{font-size:66px}
+.side .bullets li{font-size:29px}
+.side .bullets{gap:18px}
+
+/* Dos columnas */
+.split2{position:absolute; inset:110px 140px 130px; display:grid; grid-template-columns:1.05fr 1fr; gap:70px; align-items:center}
+.split2 h2{font-size:72px}
+.two{display:grid; grid-template-columns:1fr 1.15fr; gap:60px; margin-top:50px; align-items:start}
+.two.even{grid-template-columns:1fr 1fr}
+
+/* Señales en vivo */
+.scope-card{background:var(--panel); border:var(--borde, 1px) solid var(--line); border-radius:calc(28px * var(--radio, 1)); box-shadow:var(--sombra, none); padding:44px 44px 34px}
+.scope{width:100%; height:auto; overflow:visible; display:block}
+.scope .ll{fill:var(--muted); font:700 18px var(--font-body); letter-spacing:.16em; text-transform:uppercase}
+.scope .axis{stroke:var(--line); stroke-width:2}
+.scope .sig{fill:none; stroke-width:4; stroke-linejoin:round}
+.scope .s0{stroke:var(--strong)}
+.scope .s1{stroke:var(--accent)}
+.scope .s2{stroke:var(--accent-2)}
+.scope .playhead{stroke:var(--accent); stroke-width:2; stroke-dasharray:6 8}
+.scope .dir{fill:var(--accent); font:800 30px var(--font-body)}
+
+/* Tabla y código */
+.maprows{display:grid}
+.mhead, .mrow{display:grid; grid-template-columns:1.2fr 1fr 1fr} /* tipos.js lo ajusta a la cantidad de columnas */
+.mhead{font-size:18px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); padding:0 0 16px 36px; border-bottom:1px solid var(--line)}
+.mrow{font-size:30px; padding:22px 0 22px 36px; border-bottom:1px solid var(--line); color:var(--lead)}
+.mrow::before{top:22px; bottom:22px}
+.mrow span:first-child{color:var(--strong); font-weight:600}
+.mrow span:nth-child(2){color:var(--accent)}
+.code{margin:0; background:var(--code); border:var(--borde, 1px) solid var(--line); border-radius:calc(22px * var(--radio, 1)); box-shadow:var(--sombra, none); padding:34px 38px; font:400 25px/1.6 var(--font-mono, ui-monospace),'JetBrains Mono',Menlo,monospace; color:var(--lead); white-space:pre-wrap; min-height:330px}
+
+/* Columnas comparadas, con un monitor que corre */
+.col-card{border:var(--borde, 1px) solid var(--line); background:var(--panel); border-radius:calc(28px * var(--radio, 1)); box-shadow:var(--sombra, none); padding:36px 44px}
+.col-card .bullets{margin-top:10px}
+.monitor{margin-top:20px; border-top:1px solid var(--line); padding-top:22px}
+.monitor small{font-size:17px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted)}
+.monitor pre{margin:10px 0 0; font:400 21px/1.5 var(--font-mono, ui-monospace),Menlo,monospace; color:var(--accent); min-height:126px}
+
+/* Cifra */
+.figure{font-family:var(--font-display); font-weight:var(--titulo-peso, 800); font-size:300px; line-height:.85; color:var(--accent); letter-spacing:-.04em; font-variant-numeric:lining-nums; width:max-content}
+.figure small{font-size:.38em; vertical-align:.9em; margin-left:.04em}
+.bars-card{background:var(--panel); border:var(--borde, 1px) solid var(--line); border-radius:calc(28px * var(--radio, 1)); box-shadow:var(--sombra, none); padding:50px 50px 40px; display:grid; gap:44px; margin-top:20px}
+.bar .bl{display:flex; justify-content:space-between; font-size:26px; color:var(--muted); margin-bottom:14px}
+.track{height:28px; border-radius:calc(28px * var(--radio, 1)); background:var(--line); overflow:hidden}
+.track i{display:block; height:100%; border-radius:calc(28px * var(--radio, 1)); background:linear-gradient(90deg, var(--accent), var(--accent-2))}
+.bar:first-child .track i{background:color-mix(in srgb, var(--text) 35%, transparent)}
+.bnote{margin:0; font-size:24px; color:var(--muted)}
+
+/* Video */
+.player{margin-top:36px; width:1180px; border-radius:calc(26px * var(--radio, 1)); overflow:hidden; border:1px solid var(--line); background:#000; box-shadow:0 30px 80px rgba(0,0,0,.4)}
+.player video{display:block; width:100%; aspect-ratio:16/9; background:#000}
+
+/* Cita */
+.quote{position:absolute; left:180px; right:180px; top:200px}
+.quote .mark{font:var(--acento-estilo, italic) var(--titulo-peso, 800) 360px/0.6 var(--font-display); color:var(--accent); height:150px}
+.quote blockquote{margin:30px 0 0; font:var(--acento-estilo, italic) var(--titulo-peso, 700) 76px/1.18 var(--font-display); color:var(--strong); letter-spacing:var(--titulo-interletra, -.015em); text-transform:var(--titulo-caja, none); max-width:28ch; text-wrap:balance}
+.quote .who{margin-top:50px; display:flex; gap:20px; align-items:center; font-size:28px; color:var(--muted)}
+.quote .who b{color:var(--strong); font-weight:600}
+.quote .who i{display:var(--marcador, block); width:60px; height:4px; background:var(--accent); border-radius:calc(2px * var(--radio, 1))}
+
+/* Cierre */
+.closing{display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:10px}
+.closing .final{font-family:var(--font-display); font-weight:var(--titulo-peso, 800); text-transform:var(--titulo-caja, none); letter-spacing:var(--titulo-interletra, -.02em); font-size:130px; color:var(--strong); margin-top:30px}
+.closing .meta{align-items:center}

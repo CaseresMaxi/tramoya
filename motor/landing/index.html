@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Landing</title>
+  <link rel="icon" href="../proyecto/assets/logo/favicon.svg" type="image/svg+xml" />
+  <script src="../nucleo/util.js"></script>
+  <script src="../proyecto/proyecto.js"></script>
+  <script src="../proyecto/estilo/estilo.js"></script>
+  <script src="../proyecto/estado.js"></script>
+  <script>TRAMOYA.instalarFuentes(); TRAMOYA.instalarTemas('body[data-theme]');</script>
+  <style>
+    /* Landing de una página: textos en PROYECTO.landing (o lo editado), colores del tema, logo de la marca.
+       Se abre desde file:// como todo lo demás. Para publicarla: «Descargar HTML» en el editor
+       (un solo archivo), o subir landing/, nucleo/ y proyecto/ a cualquier hosting estático. */
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0; background:var(--bg); color:var(--text); font:var(--texto-peso, 400) 18px/1.6 var(--font-body)}
+    a{color:inherit}
+    .wrap{width:min(1180px, calc(100% - 48px)); margin:0 auto}
+    .accent{color:var(--accent)}
+    h1, h2, h3{font-family:var(--font-display); color:var(--strong); margin:0; font-weight:var(--titulo-peso, 700); font-style:var(--titulo-estilo, normal); text-transform:var(--titulo-caja, none); letter-spacing:var(--titulo-interletra, -.02em); line-height:var(--titulo-alto, 1.05); text-wrap:balance}
+    em{font-style:var(--acento-estilo, italic)}
+    .kicker{display:flex; align-items:center; gap:14px; color:var(--accent); font-family:var(--kicker-fuente, var(--font-body)); font-weight:var(--kicker-peso, 700); font-size:13px; letter-spacing:var(--kicker-interletra, .22em); text-transform:var(--kicker-caja, uppercase); margin-bottom:18px}
+    .kicker i{display:var(--kicker-barra-display, block); width:calc(var(--kicker-barra, 46px) * .74); height:4px; border-radius:calc(2px * var(--radio, 1)); background:var(--accent)}
+
+    nav{position:sticky; top:0; z-index:10; backdrop-filter:blur(12px); background:color-mix(in srgb, var(--bg) 80%, transparent); border-bottom:1px solid var(--line)}
+    nav .wrap{display:flex; align-items:center; justify-content:space-between; height:72px; gap:20px}
+    nav .brand svg{height:34px; width:auto; display:block}
+    nav .links{display:flex; gap:22px; font-size:15px; color:var(--muted)}
+    nav .links a{text-decoration:none}
+    nav .links a:hover{color:var(--strong)}
+
+    .hero{position:relative; min-height:min(88vh, 860px); display:grid; align-items:end; overflow:hidden}
+    .hero .bg{position:absolute; inset:0}
+    .hero .bg img{width:100%; height:100%; object-fit:cover}
+    .hero .bg::after{content:""; position:absolute; inset:0; background:linear-gradient(90deg, var(--overlay) 0%, var(--overlay) 35%, transparent 90%), linear-gradient(0deg, var(--bg), transparent 50%)}
+    .hero .wrap{position:relative; padding:120px 0 100px}
+    .hero h1{font-size:clamp(46px, 7vw, 104px); max-width:14ch}
+    .hero p{font-size:clamp(18px, 2vw, 23px); color:var(--lead); max-width:44ch; margin:26px 0 36px}
+    .cta{display:inline-flex; align-items:center; gap:12px; background:var(--accent); color:var(--bg); padding:16px 26px; border-radius:calc(40px * var(--radio, 1)); font-weight:700; text-decoration:none; box-shadow:var(--sombra, none)}
+    .cta:hover{filter:brightness(1.08)}
+
+    section.sec{padding:120px 0; border-top:1px solid var(--line)}
+    section.sec h2{font-size:clamp(36px, 4.5vw, 64px); max-width:18ch}
+    section.sec .texto{font-size:21px; color:var(--lead); max-width:56ch; margin-top:26px}
+    .cards{display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:20px; margin-top:54px}
+    .card{border:var(--borde, 1px) solid var(--line); background:var(--panel); border-radius:calc(22px * var(--radio, 1)); box-shadow:var(--sombra, none); padding:30px; display:flex; flex-direction:column; gap:10px}
+    .card i{display:var(--marcador, block); width:34px; height:4px; background:var(--accent); border-radius:calc(4px * var(--radio, 1))}
+    .card b{font:var(--titulo-peso, 800) 26px/1.15 var(--font-display); text-transform:var(--titulo-caja, none); color:var(--strong)}
+    .card > span{color:var(--muted); font-size:16px}
+
+    section.con-imagen .wrap{display:grid; grid-template-columns:1fr 1fr; gap:64px; align-items:center}
+    .foto{margin:0; border-radius:calc(22px * var(--radio, 1)); overflow:hidden; border:var(--borde, 1px) solid var(--line); box-shadow:var(--sombra, none); background:var(--panel)}
+    .foto img{width:100%; aspect-ratio:4/3; object-fit:cover; display:block}
+
+    footer{border-top:1px solid var(--line); padding:50px 0 70px; color:var(--muted); font-size:14px}
+    footer .wrap{display:flex; flex-wrap:wrap; gap:20px; align-items:center; justify-content:space-between}
+    footer svg{height:28px; width:auto; display:block}
+    footer select{background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:calc(8px * var(--radio, 1)); padding:6px 8px; font:inherit}
+
+    /* Aparición al hacer scroll (sin JS no se oculta nada) */
+    .js .rv{opacity:0; transform:translateY(26px); transition:opacity .9s cubic-bezier(.16,1,.3,1), transform .9s cubic-bezier(.16,1,.3,1)}
+    .js .rv.on{opacity:1; transform:none}
+    @media (prefers-reduced-motion: reduce){ .js .rv{opacity:1; transform:none; transition:none} }
+    @media (max-width:700px){ nav .links{display:none} section.con-imagen .wrap{grid-template-columns:1fr} }
+
+    /* Botón del editor: solo en local o con ?editar (ver el script); el resto, en editor.js */
+    .ed-abrir{position:fixed; right:14px; bottom:14px; z-index:50; background:rgba(14,14,16,.82); color:#b7b1a7; border:1px solid #2b2b31; border-radius:20px; padding:5px 12px; font:500 12px system-ui,sans-serif; cursor:pointer; opacity:.6}
+    .ed-abrir:hover{opacity:1; color:#f4f1eb}
+    body.editando .ed-abrir, body:not(.editando) #tr-estado{display:none}
+  </style>
+</head>
+<body>
+  <nav><div class="wrap"><a class="brand" href="#" id="brand"></a><div class="links" id="links"></div></div></nav>
+  <header class="hero" id="hero"></header>
+  <main id="main"></main>
+  <footer><div class="wrap"><div id="footBrand"></div><span id="pie"></span><label>Tema <select id="tema"></select></label></div></footer>
+
+  <script src="../nucleo/marca.js"></script>
+  <script src="../proyecto/glifos.js"></script>
+  <script>
+    // El documento de la landing (PROYECTO.landing + tema) se lee de TRAMOYA.leer('landing');
+    // si nadie lo editó, sale de PROYECTO.landing. El editor (editor.js) se carga recién al
+    // abrirlo: con tecla E o botón «Editar» cuando la página se abre en local (file:// o
+    // localhost), o con ?editar en cualquier lado. Nunca con ?render.
+    const U = TRAMOYA, P = PROYECTO, M = U.marca, $ = (id) => document.getElementById(id);
+    document.documentElement.classList.add('js');
+    document.title = `${U.plain(P.nombre)} — ${P.descripcion || ''}`;
+    const q = new URLSearchParams(location.search);
+    const LOCAL = location.protocol === 'file:' || /^(localhost|127\.|0\.0\.0\.0|\[::1\])/.test(location.hostname);
+    const PUEDE_EDITAR = !U.RENDER && (q.has('editar') || LOCAL);
+
+    // Completa lo que falte y deduce el tipo de sección de los datos viejos
+    function normalizar(L) {
+      L = L || {};
+      const temas = Object.keys(P.temas), ok = (t) => temas.includes(t);
+      return {
+        // Al previsualizar otro estilo (?estilo=) manda su tema
+        tema: ok(L.tema) && !P.estiloPrueba ? L.tema : ok(P.estilo?.tema) ? P.estilo.tema : temas[0],
+        hero: { kicker: '', titulo: '', bajada: '', cta: '', ctaUrl: '', imagen: '', ...(L.hero || {}) },
+        secciones: (L.secciones || []).map((s) => ({ tipo: s.tipo || (s.items ? 'tarjetas' : s.imagen ? 'imagen' : 'texto'), kicker: '', titulo: '', texto: '', ...s })),
+        pie: L.pie || '',
+      };
+    }
+    const base = () => normalizar(U.clone(P.landing || {}));
+    const guardado = U.leer('landing');
+    const LANDING = (window.LANDING = { doc: guardado ? normalizar(guardado) : base(), editando: false, base, normalizar });
+    LANDING.guardar = () => U.guardar('landing', LANDING.doc);
+    // Migración: antes el tema vivía solo, en <id>-landing-tema
+    const temaViejo = U.RENDER ? null : U.leer('landing-tema');
+    if (temaViejo != null) {
+      if (!guardado && P.temas[temaViejo] && temaViejo !== LANDING.doc.tema) { LANDING.doc.tema = temaViejo; LANDING.guardar(); }
+      U.borrar('landing-tema');
+    }
+    // El selector del pie, para un visitante, cambia el tema solo en esta visita
+    let temaVista = P.temas[q.get('tema')] ? q.get('tema') : null;
+    const temaActual = () => (!LANDING.editando && temaVista) || LANDING.doc.tema;
+
+    const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('on'); io.unobserve(e.target); } }), { threshold: 0.15 });
+    function render() {
+      const D = LANDING.doc, ED = LANDING.editando, tema = temaActual();
+      // Texto editable: en el editor lleva data-campo (la ruta en el documento) y contenteditable
+      const txt = (tag, cls, campo, valor, { siempre = false, ph = '', md = true } = {}) => {
+        if (!valor && !siempre && !ED) return '';
+        const a = (cls ? ` class="${cls}"` : '') + (ED ? ` data-campo="${campo}" data-ph="${U.esc(ph)}"${md ? '' : ' data-plano'} contenteditable="plaintext-only"` : '');
+        return `<${tag}${a}>${md ? U.md(valor) : U.esc(valor)}</${tag}>`;
+      };
+      const kicker = (campo, v) => `<div class="kicker rv"><i></i>${txt('span', '', campo, v, { siempre: true, ph: 'Antetítulo' })}</div>`;
+      document.body.dataset.theme = tema;
+      const logo = () => M.buildSVG({ ...M.cfgDe(M.hayEditor() ? 'editor' : 'tema', tema), layout: 'horizontal', margen: 0, lienzo: 'ajustado' }, { background: null }).svg;
+      $('brand').innerHTML = logo(); $('footBrand').innerHTML = logo();
+      const h = D.hero;
+      $('hero').innerHTML = `${h.imagen ? `<div class="bg"><img src="${U.esc(h.imagen)}" alt=""></div>` : ''}
+        <div class="wrap">${kicker('hero.kicker', h.kicker)}${txt('h1', 'rv', 'hero.titulo', h.titulo, { siempre: true, ph: 'Título' })}${txt('p', 'rv', 'hero.bajada', h.bajada, { siempre: true, ph: 'Bajada' })}
+        ${h.cta ? `<a class="cta rv" href="${U.esc(h.ctaUrl || '#')}">${txt('span', '', 'hero.cta', h.cta, { md: false, ph: 'Botón' })} →</a>` : ''}</div>`;
+      $('main').innerHTML = D.secciones.map((s, i) => {
+        const c = (k) => `secciones.${i}.${k}`;
+        const cuerpo = `${kicker(c('kicker'), s.kicker)}${txt('h2', 'rv', c('titulo'), s.titulo, { siempre: true, ph: 'Título' })}${txt('p', 'texto rv', c('texto'), s.texto, { ph: 'Texto (opcional)' })}`;
+        if (s.tipo === 'imagen') return `
+        <section class="sec con-imagen" id="s${i}"><div class="wrap"><div>${cuerpo}</div>${s.imagen ? `<figure class="foto rv"><img src="${U.esc(s.imagen)}" alt=""></figure>` : ''}</div></section>`;
+        const cards = s.tipo === 'tarjetas' && s.items ? `<div class="cards">${U.pairs(s.items).map((it, k) => `<div class="card rv"><i></i>${txt('b', '', `${c('items')}.${k}.t`, it.t, { siempre: true, ph: 'Título' })}${txt('span', '', `${c('items')}.${k}.d`, it.d, { siempre: true, ph: 'Detalle' })}</div>`).join('')}</div>` : '';
+        return `
+        <section class="sec" id="s${i}"><div class="wrap">${cuerpo}${cards}</div></section>`;
+      }).join('');
+      $('links').innerHTML = D.secciones.map((s, i) => `<a href="#s${i}">${U.esc(U.plain(s.kicker))}</a>`).join('');
+      $('pie').outerHTML = txt('span', '', 'pie', D.pie, { siempre: true, md: false, ph: 'Pie' }).replace('<span', '<span id="pie"');
+      $('tema').value = tema;
+      // Aparición escalonada al entrar en pantalla (en el editor y en render, todo visible ya)
+      document.querySelectorAll('.rv').forEach((el, i) => {
+        if (ED || U.RENDER) return el.classList.add('on');
+        el.style.transitionDelay = `${(i % 4) * 0.08}s`; io.observe(el);
+      });
+    }
+    LANDING.render = render;
+    Object.entries(P.temas).forEach(([k, t]) => $('tema').add(new Option(t.nombre || k, k)));
+    $('tema').onchange = (e) => {
+      if (LANDING.editando) { LANDING.doc.tema = e.target.value; LANDING.guardar(); LANDING.alCambiar?.(); }
+      else temaVista = e.target.value;
+      render();
+    };
+    // Los estilos de la página (para el HTML descargado: los del editor no llevan la marca)
+    document.querySelectorAll('style').forEach((s) => { s.dataset.landing = ''; });
+
+    // ---------- Editor: se carga a pedido ----------
+    const cargar = (src) => new Promise((ok) => { const s = document.createElement('script'); s.src = src; s.onload = s.onerror = ok; document.body.appendChild(s); });
+    let cargando = null;
+    async function editar(abrir = !LANDING.editando) {
+      if (!PUEDE_EDITAR) return;
+      cargando ||= (async () => { if (!U.panel) await cargar('../nucleo/panel.js'); if (!window.MANIFIESTO) await cargar('../proyecto/manifiesto.js'); await cargar('editor.js'); })();
+      await cargando;
+      LANDING.abrir(abrir);
+    }
+    if (PUEDE_EDITAR) {
+      const b = document.createElement('button');
+      b.className = 'ed-abrir'; b.type = 'button'; b.textContent = 'Editar'; b.title = 'Editar la landing (E)';
+      b.onclick = () => editar(true);
+      document.body.appendChild(b);
+      addEventListener('keydown', (e) => {
+        if (e.metaKey || e.ctrlKey || e.altKey || e.target.closest?.('input, textarea, select, [contenteditable]')) return;
+        if (/^[eE]$/.test(e.key)) editar();
+      });
+    }
+    window.ready = U.fuentesListas().then(() => { render(); if (q.has('editar') && PUEDE_EDITAR) editar(true); return true; });
+  </script>
+</body>
+</html>

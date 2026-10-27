@@ -1,18 +1,29 @@
 {
   "name": "tramoya",
   "version": "0.1.0",
-  "private": true,
-  "description": "Presentaciones, videos y piezas gráficas en HTML estático, a partir de un mismo proyecto.",
+  "description": "Presentaciones motion, reels, pósters, landings y marca en HTML estático, con un estudio en el navegador. Agent Skill.",
   "type": "module",
-  "scripts": {
-    "revisar": "node render/revisar.mjs",
-    "video": "node render/video.mjs",
-    "poster": "node render/poster.mjs",
-    "marca": "node render/marca.mjs",
-    "manifiesto": "python3 herramientas/generar_manifiesto.py",
-    "glifos": "python3 herramientas/generar_glifos.py"
+  "bin": {
+    "tramoya": "scripts/tramoya.mjs"
   },
-  "devDependencies": {
+  "engines": {
+    "node": ">=18"
+  },
+  "optionalDependencies": {
     "playwright-core": "^1.50.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CaseresMaxi/tramoya.git"
+  },
+  "files": [
+    "SKILL.md",
+    "README.md",
+    "scripts/",
+    "motor/",
+    "!motor/node_modules/**",
+    "plantilla/",
+    "referencias/",
+    "instalar.sh"
+  ]
 }

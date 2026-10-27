@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tramoya</title>
+  <link rel="icon" href="proyecto/assets/logo/favicon.svg" type="image/svg+xml" />
+  <!-- Tablero del proyecto: piezas, estilo, pedidos al agente, código, salidas y llevar.
+       Con el servidor (`tramoya estudio` o `tramoya abrir`) guarda en archivos; con doble
+       clic se abren las piezas y lo que necesita el servidor muestra el comando. -->
+  <script src="nucleo/util.js"></script>
+  <script src="proyecto/proyecto.js"></script>
+  <script src="proyecto/estilo/estilo.js"></script>
+  <script src="proyecto/estado.js"></script>
+  <script>TRAMOYA.sinIndicador = true; TRAMOYA.instalarFuentes('');</script>
+  <link rel="stylesheet" href="tablero/tablero.css" />
+</head>
+<body>
+  <div class="tb">
+    <aside class="lado">
+      <a class="volver" id="volver" href="/" hidden>← Todos los proyectos</a>
+      <div class="ident"><div class="logo" id="logo"></div><div class="pid" id="pid"></div></div>
+      <nav id="nav">
+        <a href="#piezas" data-s="piezas"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>Piezas</a>
+        <a href="#estilo" data-s="estilo"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="9" cy="9.5" r="1.2"/><circle cx="14.5" cy="8.5" r="1.2"/><circle cx="16" cy="13" r="1.2"/><path d="M11 20.5c-1.5-2 0-4 2-4h1.5"/></svg>Estilo<b class="cuenta" id="cEstilo"></b></a>
+        <a href="#pedidos" data-s="pedidos"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12.5h5"/></svg>Pedidos al agente<b class="cuenta" id="cPedidos"></b></a>
+        <a href="#codigo" data-s="codigo"><svg viewBox="0 0 24 24"><path d="M8.5 7 3.5 12l5 5M15.5 7l5 5-5 5M13.5 5l-3 14"/></svg>Código</a>
+        <a href="#salidas" data-s="salidas"><svg viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5"/><path d="M4 17v3h16v-3"/></svg>Salidas</a>
+        <a href="#llevar" data-s="llevar"><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="13" rx="2"/><path d="M9 7V4.5h6V7M4 12h16"/></svg>Llevar</a>
+      </nav>
+      <div class="srv" id="srv"><b><i></i>Conectando…</b></div>
+    </aside>
+    <main id="main">
+      <section class="sec" id="s-piezas" hidden></section>
+      <section class="sec" id="s-estilo" hidden></section>
+      <section class="sec" id="s-pedidos" hidden></section>
+      <section class="sec ancha" id="s-codigo" hidden></section>
+      <section class="sec" id="s-salidas" hidden></section>
+      <section class="sec" id="s-llevar" hidden></section>
+    </main>
+  </div>
+  <input type="file" id="fImp" accept=".json,application/json" hidden>
+  <script src="nucleo/marca.js"></script>
+  <script src="proyecto/glifos.js"></script>
+  <script src="tablero/codigo.js"></script>
+  <script src="tablero/tablero.js"></script>
+</body>
+</html>

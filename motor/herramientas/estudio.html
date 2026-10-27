@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Estudio · Tramoya</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Cpath d=%22M3 2v12M6.3 2v12M9.7 2v12M13 2v12%22 stroke=%22%23d7a54a%22 stroke-width=%221.6%22/%3E%3C/svg%3E" />
+  <!-- Inicio del estudio (`tramoya estudio`): los proyectos de la carpeta de trabajo, crear
+       uno nuevo, importar un .zip. Cada proyecto se abre en su tablero (/p/<carpeta>/). -->
+  <style>
+    :root{--bg:#0e0e11; --panel:#16161a; --panel-2:#1b1b20; --campo:#0f0f12; --linea:#2b2b31; --linea-2:#3a3a42; --texto:#f4f1eb; --suave:#b7b1a7; --tenue:#8d877e; --acento:#d7a54a; --mal:#e5484d; --ok:#5fbf7a}
+    *{box-sizing:border-box}
+    html,body{margin:0; min-height:100%; background:var(--bg); color:var(--texto); font:14px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif}
+    code{font-family:ui-monospace, Menlo, Consolas, monospace; font-size:.92em}
+    code.cmd{background:var(--campo); border:1px solid var(--linea); border-radius:6px; padding:2px 8px; color:var(--acento); cursor:copy}
+    main{max-width:1240px; margin:0 auto; padding:40px 32px 64px}
+    header{display:flex; align-items:flex-end; gap:20px; flex-wrap:wrap; margin-bottom:28px}
+    header .marca{font:800 13px system-ui; letter-spacing:.22em; text-transform:uppercase; color:var(--acento)}
+    header h1{font-size:30px; margin:4px 0 2px; letter-spacing:-.01em}
+    header p{margin:0; color:var(--tenue); font-size:13px; word-break:break-all}
+    header .acc{margin-left:auto; display:flex; gap:8px}
+    .btn{display:inline-flex; align-items:center; gap:7px; background:#24242a; color:var(--texto); border:1px solid var(--linea); border-radius:9px; padding:8px 13px; cursor:pointer; text-decoration:none; font:inherit; font-size:13px; font-weight:550; white-space:nowrap}
+    .btn:hover{background:#2f2f36}
+    .btn.pri{background:var(--acento); color:#16120a; border-color:var(--acento)}
+    .btn:disabled{opacity:.5; cursor:default}
+    .grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(290px, 1fr)); gap:18px}
+    .card{background:var(--panel); border:1px solid var(--linea); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; text-decoration:none; color:inherit; transition:border-color .2s, transform .2s}
+    a.card:hover{border-color:var(--acento); transform:translateY(-2px)}
+    .mini{position:relative; aspect-ratio:16/9; background:#09090b; overflow:hidden; border-bottom:1px solid var(--linea)}
+    .mini iframe{position:absolute; left:0; top:0; width:1920px; height:1080px; border:0; transform-origin:0 0; pointer-events:none; opacity:0; transition:opacity .3s}
+    .mini .carga{position:absolute; inset:0; display:grid; place-items:center; color:var(--tenue); font-size:12px}
+    .cuerpo{padding:14px 16px 16px; display:flex; flex-direction:column; gap:6px; flex:1}
+    .cuerpo b{font-size:17px}
+    .cuerpo p{margin:0; color:var(--suave); font-size:13px}
+    .meta{display:flex; gap:6px; flex-wrap:wrap; margin-top:auto; padding-top:8px}
+    .chip{display:inline-flex; align-items:center; border:1px solid var(--linea); border-radius:20px; padding:1px 9px; font-size:11.5px; color:var(--suave); background:var(--panel-2); white-space:nowrap}
+    .chip.acento{color:var(--acento); border-color:#5a4520}
+    .chip.aviso{color:#16120a; background:var(--acento); border-color:var(--acento); font-weight:700}
+    .nuevo{border-style:dashed; padding:20px; gap:12px; justify-content:center}
+    .nuevo h2{margin:0; font-size:17px}
+    .nuevo p{margin:0; color:var(--tenue); font-size:13px}
+    .campo{display:grid; gap:5px}
+    .campo span{color:var(--suave); font-size:12px}
+    input[type=text], select{width:100%; background:var(--campo); color:var(--texto); border:1px solid var(--linea); border-radius:8px; padding:9px 10px; font:inherit; font-size:13px}
+    input:focus, select:focus{outline:none; border-color:var(--acento)}
+    .err{color:#ffb3b5; font-size:12.5px; min-height:1em}
+    .vacio{grid-column:1/-1; border:1px dashed var(--linea); border-radius:14px; padding:28px; color:var(--tenue); text-align:center}
+    .agente{margin-top:36px; border:1px solid var(--linea); border-radius:14px; padding:18px 22px; background:var(--panel); color:var(--suave); display:grid; gap:6px}
+    .agente b{color:var(--texto)}
+    .soltar{position:fixed; inset:0; background:rgba(14,14,17,.86); border:3px dashed var(--acento); display:none; place-items:center; z-index:20; font-size:22px; font-weight:700; color:var(--acento)}
+    body.arrastrando .soltar{display:grid}
+    #toast{position:fixed; bottom:28px; left:50%; transform:translateX(-50%); background:var(--acento); color:#111; padding:10px 16px; border-radius:8px; font-weight:600; opacity:0; transition:opacity .2s; pointer-events:none; z-index:30}
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div><div class="marca">Tramoya · Estudio</div><h1>Tus proyectos</h1><p id="carpeta"></p></div>
+      <div class="acc"><button class="btn" id="bImportar">Importar .zip…</button></div>
+    </header>
+    <div class="grid" id="grid">
+      <form class="card nuevo" id="fNuevo">
+        <h2>Proyecto nuevo</h2>
+        <p>Trae un ejemplo completo para reemplazar con lo tuyo: presentación, reel, póster, landing y marca.</p>
+        <label class="campo"><span>Nombre</span><input type="text" name="nombre" placeholder="Mi charla" required maxlength="80"></label>
+        <label class="campo"><span>Estilo</span><select name="estilo"><option value="">Elegirlo después (en la galería)</option></select></label>
+        <div class="err" id="errNuevo"></div>
+        <button class="btn pri" type="submit">Crear y abrir</button>
+      </form>
+    </div>
+    <div class="agente">
+      <b>Con tu agente</b>
+      <span>Pedile lo que quieras en palabras («haceme una presentación de 5 minutos sobre este repo»). Lo que pidas desde cada tablero en <i>Pedidos al agente</i>, y las correcciones que marques en las piezas, el agente las lee con <code class="cmd">tramoya estado</code>.</span>
+      <span>Arrastrá un <code>.zip</code> de Tramoya a esta página para traerlo a la carpeta.</span>
+    </div>
+  </main>
+  <div class="soltar">Soltá el .zip para importarlo</div>
+  <input type="file" id="fZip" accept=".zip,application/zip" hidden>
+  <div id="toast"></div>
+  <script>
+    (function () {
+      const $ = (s) => document.querySelector(s);
+      const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+      const toast = (m) => { const t = $('#toast'); t.textContent = m; t.style.opacity = 1; clearTimeout(t._t); t._t = setTimeout(() => (t.style.opacity = 0), 2600); };
+      document.addEventListener('click', (e) => { const c = e.target.closest('code.cmd'); if (c) navigator.clipboard?.writeText(c.textContent).then(() => toast('Copiado')); });
+      async function api(ruta, op) {
+        const r = await fetch('/__estudio/' + ruta, op), j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.error || 'Error ' + r.status);
+        return j;
+      }
+      const hace = (t) => { if (!t) return ''; const s = (Date.now() - new Date(t)) / 1000; return s < 60 ? 'recién' : s < 3600 ? `hace ${Math.round(s / 60)} min` : s < 86400 ? `hace ${Math.round(s / 3600)} h` : new Date(t).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' }); };
+
+      // Miniatura: la presentación en modo render, en su primer punto clave (cuando se ve)
+      const alVer = new IntersectionObserver((es) => es.forEach((e) => { if (!e.isIntersecting) return; alVer.unobserve(e.target); cargarMini(e.target); }), { rootMargin: '200px' });
+      function cargarMini(caja) {
+        const f = document.createElement('iframe');
+        f.tabIndex = -1; f.setAttribute('aria-hidden', 'true'); f.src = caja.dataset.url + 'motion/index.html?render';
+        const ajustar = () => { const s = caja.clientWidth / 1920; f.style.transform = `scale(${s})`; };
+        ajustar(); new ResizeObserver(ajustar).observe(caja);
+        f.onload = async () => { try { const w = f.contentWindow; await w.ready; if (w.seek) w.seek(w.CLAVES?.[0]?.v ?? 0); } catch (e) {} f.style.opacity = 1; caja.querySelector('.carga')?.remove(); };
+        caja.appendChild(f);
+      }
+      async function cargar() {
+        let j;
+        try { j = await api('proyectos'); } catch (e) { $('#carpeta').textContent = e.message; return; }
+        $('#carpeta').textContent = j.carpeta;
+        const firma = JSON.stringify(j.proyectos); if (firma === cargar.firma) return; cargar.firma = firma;
+        document.querySelectorAll('.card.proy, .vacio').forEach((x) => x.remove());
+        const grid = $('#grid');
+        if (!j.proyectos.length) grid.insertAdjacentHTML('beforeend', '<div class="vacio">Todavía no hay proyectos en esta carpeta. Creá uno con el formulario, o arrastrá un .zip.</div>');
+        for (const p of j.proyectos) {
+          const a = document.createElement('a');
+          a.className = 'card proy'; a.href = p.url;
+          a.innerHTML = `<div class="mini" data-url="${esc(p.url)}"><div class="carga">${esc(p.nombre)}</div></div>
+            <div class="cuerpo"><b>${esc(p.nombre)}</b><p>${esc(p.descripcion || '')}</p>
+            <div class="meta">${p.estilo ? `<span class="chip acento">${esc(p.estilo)}</span>` : '<span class="chip">sin estilo</span>'}
+              ${p.pendientes ? `<span class="chip aviso" title="Pedidos y correcciones sin resolver">${p.pendientes} pendiente${p.pendientes > 1 ? 's' : ''}</span>` : ''}
+              <span class="chip" title="${esc(p.carpeta)}">${esc(p.relativa === '.' ? 'esta carpeta' : p.relativa + '/')}</span>
+              ${p.fecha ? `<span class="chip">${esc(hace(p.fecha))}</span>` : ''}</div></div>`;
+          grid.appendChild(a);
+          alVer.observe(a.querySelector('.mini'));
+        }
+      }
+      api('estilos').then(({ estilos }) => {
+        const sel = $('#fNuevo').estilo;
+        estilos.forEach((e) => sel.insertAdjacentHTML('beforeend', `<option value="${esc(e.id)}">${esc(e.nombre || e.id)}${e.descripcion ? ' — ' + esc(e.descripcion) : ''}</option>`));
+      }).catch(() => {});
+      $('#fNuevo').onsubmit = async (e) => {
+        e.preventDefault();
+        const f = e.target, b = f.querySelector('button'); b.disabled = true; $('#errNuevo').textContent = '';
+        try { const p = await api('nuevo', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ nombre: f.nombre.value, estilo: f.estilo.value }) }); location.href = p.url; }
+        catch (err) { $('#errNuevo').textContent = err.message; b.disabled = false; }
+      };
+      // Importar: arrastrando a la página o con el botón
+      async function importar(file) {
+        if (!file || !/\.zip$/i.test(file.name)) return toast('Tiene que ser un .zip de Tramoya');
+        toast('Importando ' + file.name + '…');
+        try { const p = await api('importar?nombre=' + encodeURIComponent(file.name), { method: 'PUT', body: file }); toast('Importado en ' + p.relativa); cargar(); }
+        catch (err) { toast(err.message); }
+      }
+      $('#bImportar').onclick = () => $('#fZip').click();
+      $('#fZip').onchange = (e) => { importar(e.target.files[0]); e.target.value = ''; };
+      let n = 0;
+      addEventListener('dragenter', (e) => { if ([...e.dataTransfer.types].includes('Files')) { n++; document.body.classList.add('arrastrando'); } });
+      addEventListener('dragleave', () => { if (--n <= 0) { n = 0; document.body.classList.remove('arrastrando'); } });
+      addEventListener('dragover', (e) => e.preventDefault());
+      addEventListener('drop', (e) => { e.preventDefault(); n = 0; document.body.classList.remove('arrastrando'); importar(e.dataTransfer.files[0]); });
+      addEventListener('focus', cargar); // si se creó uno desde la terminal, aparece al volver
+      cargar();
+    })();
+  </script>
+</body>
+</html>

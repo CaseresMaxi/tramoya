@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Editor de marca</title>
+  <link rel="icon" href="../proyecto/assets/logo/favicon.svg" type="image/svg+xml" />
+  <script src="../nucleo/util.js"></script>
+  <script src="../proyecto/proyecto.js"></script>
+  <script src="../proyecto/estilo/estilo.js"></script>
+  <script src="../proyecto/estado.js"></script>
+  <script>TRAMOYA.instalarFuentes();</script>
+  <style>
+    *{box-sizing:border-box}
+    html,body{margin:0; height:100%; background:#0b0b0d; color:#f4f1eb; font:14px var(--font-body)}
+    .layout{display:grid; grid-template-columns:1fr 400px; height:100vh}
+    .stage{display:grid; grid-template-rows:1fr auto; min-width:0}
+    .preview{display:grid; place-items:center; padding:40px; transition:background .2s}
+    .preview svg{max-width:100%; max-height:62vh; width:auto; height:auto; display:block}
+    .preview.check{background-color:#fff; background-image:linear-gradient(45deg,#ddd 25%,transparent 25%),linear-gradient(-45deg,#ddd 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#ddd 75%),linear-gradient(-45deg,transparent 75%,#ddd 75%); background-size:24px 24px; background-position:0 0,0 12px,12px -12px,-12px 0}
+    .strip{display:flex; gap:12px; padding:14px 18px; border-top:1px solid #2b2b31; overflow-x:auto; background:#111114}
+    .strip button{flex:none; width:150px; border:1px solid #2b2b31; border-radius:10px; background:#0f0f12; padding:0; cursor:pointer; color:#b7b1a7; font:11px system-ui,sans-serif; overflow:hidden}
+    .strip button:hover{border-color:#d7a54a}
+    .strip button div{height:80px; display:grid; place-items:center; padding:10px}
+    .strip button svg{max-width:100%; max-height:60px}
+    .strip button{position:relative}
+    .strip button .x{position:absolute; top:4px; right:6px; color:#8d877e; font-size:13px; line-height:1}
+    .strip button .x:hover{color:#e0605a}
+    .strip button span{display:block; padding:5px 6px; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+    aside{border-left:1px solid #2b2b31; background:#16161a; display:flex; flex-direction:column; min-height:0}
+    aside header{padding:16px 18px 12px; border-bottom:1px solid #2b2b31}
+    aside h1{font:800 24px var(--font-display); margin:0 0 4px}
+    aside p{margin:0; color:#b7b1a7; font-size:12.5px; line-height:1.5}
+    .tools{display:flex; flex-wrap:wrap; gap:6px; padding:12px 18px; border-bottom:1px solid #2b2b31}
+    #form{flex:1; overflow:auto; padding:4px 18px 30px}
+    .bgsel{display:flex; gap:6px; position:absolute; left:18px; top:14px}
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <div class="stage">
+      <div class="preview" id="preview"></div>
+      <div class="strip" id="strip"></div>
+    </div>
+    <aside>
+      <header>
+        <h1>Marca</h1>
+        <p>Abajo, las variantes del proyecto: un clic carga una como punto de partida. Lo que diseñes acá queda guardado (en proyecto/estado/ si abriste con <code>tramoya abrir</code>; si no, en este navegador) y lo usan la presentación ("Último diseño del editor de marca"), el póster, el reel y la landing. «Guardar como variante» le pone nombre para elegirlo en las otras piezas.</p>
+      </header>
+      <div class="tools">
+        <button class="tr-btn" id="bSvg">SVG</button>
+        <button class="tr-btn" id="bPng">PNG 2048</button>
+        <button class="tr-btn" id="bZip">Todas las variantes (.zip)</button>
+        <button class="tr-btn" id="bCopy">Copiar ajustes</button>
+        <button class="tr-btn" id="bPaste">Pegar ajustes</button>
+        <button class="tr-btn" id="bFondo">Ver con fondo</button>
+        <button class="tr-btn" id="bVariante">Guardar como variante…</button>
+        <button class="tr-btn" id="bReset">Restaurar</button>
+      </div>
+      <div id="form"></div>
+    </aside>
+  </div>
+
+  <script src="../nucleo/marca.js"></script>
+  <script src="../nucleo/panel.js"></script>
+  <script src="../proyecto/glifos.js"></script>
+  <script>
+    const U = TRAMOYA, M = U.marca, P = PROYECTO, $ = (id) => document.getElementById(id);
+    const render = new URLSearchParams(location.search).has('render');
+    let cfg = { ...M.DEFAULTS, ...M.cfgDe('tema', P.estilo?.tema), ...(U.leer('marca-editor') || {}) };
+    let conFondo = true;
+    const save = () => { if (!render) U.guardar('marca-editor', cfg); };
+
+    function dibujar() {
+      const { svg } = M.buildSVG(cfg, { background: conFondo ? cfg.fondo : M.exportBg(cfg) });
+      $('preview').innerHTML = svg;
+      $('preview').classList.toggle('check', !conFondo && !M.exportBg(cfg));
+      $('preview').style.background = conFondo ? cfg.fondo : '';
+    }
+    const panel = U.panel({ contenedor: $('form'), schema: M.SCHEMA, cfg, alCambiar: () => { save(); dibujar(); } });
+
+    function tira() {
+      const V = M.variantes();
+      $('strip').innerHTML = '';
+      Object.entries(V).forEach(([id, v]) => {
+        const c = M.cfgDe(id, P.estilo?.tema), b = document.createElement('button');
+        b.innerHTML = `<div style="background:${c.fondo}">${M.buildSVG({ ...c, layout: 'horizontal', margen: 0, lienzo: 'ajustado' }, { background: null }).svg}</div><span>${U.esc(v.nombre || id)}</span>`;
+        b.onclick = () => { Object.assign(cfg, c); save(); panel.armar(); dibujar(); U.toast('Variante cargada: ' + (v.nombre || id)); };
+        if (v.propia) {
+          b.insertAdjacentHTML('beforeend', '<i class="x" title="Borrar esta variante">×</i>');
+          b.querySelector('.x').onclick = (e) => {
+            e.stopPropagation(); if (!confirm(`¿Borrar la variante «${v.nombre || id}»?`)) return;
+            const vs = U.leer('marca-variantes') || {}; delete vs[id]; U.guardar('marca-variantes', vs); tira();
+          };
+        }
+        $('strip').appendChild(b);
+      });
+    }
+
+    // ---------- Exportar ----------
+    const slug = (s) => U.plain(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const base = () => slug(cfg.palabra) || P.id;
+    $('bSvg').onclick = () => U.descargar(`${base()}-${cfg.layout}.svg`, M.buildSVG(cfg).svg, 'image/svg+xml');
+    $('bPng').onclick = async () => U.descargar(`${base()}-${cfg.layout}.png`, await M.aPNG(M.buildSVG(cfg).svg, 2048));
+    $('bCopy').onclick = () => U.copiar(JSON.stringify(cfg), 'Ajustes copiados: pegalos en otro editor de marca o en proyecto.js (marca.base)');
+    $('bPaste').onclick = () => {
+      const t = prompt('Pegá los ajustes (JSON):'); if (!t) return;
+      try { Object.assign(cfg, JSON.parse(t)); save(); panel.armar(); dibujar(); } catch (e) { U.toast('No es un JSON válido'); }
+    };
+    $('bVariante').onclick = () => {
+      const n = prompt('Nombre de la variante:', ''); if (!n || !n.trim()) return;
+      const vs = U.leer('marca-variantes') || {}, { nombre, propia, ...c } = cfg;
+      vs[n.trim()] = c; U.guardar('marca-variantes', vs); tira(); U.toast(`Variante «${n.trim()}» guardada: ya se puede elegir en las otras piezas`);
+    };
+    $('bFondo').onclick = (e) => { conFondo = !conFondo; e.target.classList.toggle('on', conFondo); dibujar(); };
+    $('bFondo').classList.add('on');
+    $('bReset').onclick = () => { if (!confirm('¿Volver al diseño del proyecto? Se pierde lo editado.')) return; U.borrar('marca-editor'); cfg = Object.assign(cfg, M.DEFAULTS, M.cfgDe('tema', P.estilo?.tema)); panel.armar(); dibujar(); };
+
+    // Todos los archivos de una vez: por variante, horizontal, vertical e isotipo, con y sin
+    // fondo, más el favicon. Devuelve { nombre: texto SVG | Blob PNG }. Lo usan el zip y render/marca.mjs.
+    window.archivos = async ({ png = true } = {}) => {
+      const out = {}, V = { actual: { nombre: 'actual' }, ...M.variantes() };
+      for (const [id, v] of Object.entries(V)) {
+        const c = id === 'actual' ? cfg : M.cfgDe(id, P.estilo?.tema), n = slug(id);
+        for (const layout of ['horizontal', 'vertical', 'isotipo']) {
+          if (layout === 'isotipo' && c.forma === 'ninguna') continue;
+          for (const fondo of ['transparente', 'elegido']) {
+            const svg = M.buildSVG({ ...c, layout, fondoExport: fondo, lienzo: 'ajustado' }).svg, nombre = `${layout}-${n}${fondo === 'elegido' ? '-fondo' : ''}`;
+            out[`${n}/${nombre}.svg`] = svg;
+            if (png) out[`${n}/${nombre}.png`] = await M.aPNG(svg, 2048);
+          }
+        }
+        out[`${n}/ajustes.json`] = JSON.stringify(c, null, 2);
+      }
+      // Favicon: isotipo sobre su fondo, cuadrado y redondeado
+      out['favicon.svg'] = M.buildSVG({ ...cfg, layout: cfg.forma === 'ninguna' ? 'palabra' : 'isotipo', fondoExport: 'elegido', lienzo: 'cuadrado', margen: 14, radioFondo: 22 }).svg;
+      return out;
+    };
+    $('bZip').onclick = async () => {
+      if (!window.JSZip) {
+        await new Promise((ok, mal) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'; s.onload = ok; s.onerror = mal; document.head.appendChild(s); })
+          .catch(() => U.toast('Para el .zip hace falta internet (JSZip). Sin internet: node render/marca.mjs'));
+        if (!window.JSZip) return;
+      }
+      U.toast('Armando el .zip…');
+      const zip = new JSZip(), files = await window.archivos();
+      Object.entries(files).forEach(([n, c]) => zip.file(n, c));
+      U.descargar(`${base()}-marca.zip`, await zip.generateAsync({ type: 'blob' }));
+    };
+
+    window.ready = U.fuentesListas().then(() => { dibujar(); tira(); return true; });
+  </script>
+</body>
+</html>
