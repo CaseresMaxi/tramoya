@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Presentaciones, videos y piezas gráficas en HTML estático, a partir de un mismo proyecto.",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "type": "module",
   "scripts": {
     "revisar": "node render/revisar.mjs",

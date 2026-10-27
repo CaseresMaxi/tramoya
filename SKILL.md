@@ -1,6 +1,7 @@
 ---
 name: tramoya
 description: Genera presentaciones motion (se reproducen como un video), reels con música exportables a MP4, pósters A1–A4 a 300 dpi + PDF, landings y logos paramétricos, todo en HTML/CSS/JS estático a partir de un mismo proyecto, y cada pieza abre con su editor visual que guarda en archivos. Usala cuando pidan una presentación, deck, slides, charla o pitch; un video, reel, motion graphics o animación; un póster, flyer, cartel o imagen para imprimir o redes; una landing o página de un proyecto; un logo, marca o identidad; o editar, corregir, exportar o llevar a otro lado piezas de Tramoya (carpetas con proyecto/proyecto.js). Also for presentations, slide decks, pitch videos, reels, posters, landing pages and logos.
+license: PolyForm Noncommercial 1.0.0 — gratis para uso no comercial; uso comercial con licencia del autor (COMERCIAL.md)
 ---
 
 # Tramoya

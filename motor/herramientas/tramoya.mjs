@@ -30,7 +30,7 @@ const PLANTILLA = SKILL ? join(SKILL, 'plantilla', 'proyecto') : join(RAIZ_AQUI,
 // Lanzadores de doble clic (macOS, Windows, Linux): abren el estudio en la carpeta del proyecto
 const LANZADORES = ['Abrir estudio.command', 'Abrir estudio.bat', 'abrir-estudio.sh'];
 // Lo que es motor (se copia y se actualiza); todo lo demás del proyecto es del usuario
-const PARTES_MOTOR = ['index.html', 'tablero', 'nucleo', 'estilos', 'motion', 'reel', 'poster', 'landing', 'marca', 'render', 'herramientas', 'package.json', 'package-lock.json', ...LANZADORES];
+const PARTES_MOTOR = ['LICENCIA.md', 'index.html', 'tablero', 'nucleo', 'estilos', 'motion', 'reel', 'poster', 'landing', 'marca', 'render', 'herramientas', 'package.json', 'package-lock.json', ...LANZADORES];
 
 // ---------- Utilidades ----------
 const c = process.stdout.isTTY ? { b: (s) => `\x1b[1m${s}\x1b[0m`, g: (s) => `\x1b[32m${s}\x1b[0m`, r: (s) => `\x1b[31m${s}\x1b[0m`, d: (s) => `\x1b[2m${s}\x1b[0m`, y: (s) => `\x1b[33m${s}\x1b[0m` } : { b: String, g: String, r: String, d: String, y: String };

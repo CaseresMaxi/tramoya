@@ -1,0 +1,45 @@
+name: Pedir licencia comercial
+description: Para usar Tramoya en una empresa, en trabajo pago para clientes o dentro de un producto.
+title: "Licencia comercial: <empresa o proyecto>"
+labels: ["licencia-comercial"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Tramoya es gratis para uso no comercial ([PolyForm Noncommercial 1.0.0](https://github.com/CaseresMaxi/tramoya/blob/main/LICENSE.md)). Para uso comercial acordamos una licencia: completá esto y te respondo con una propuesta. Ver [COMERCIAL.md](https://github.com/CaseresMaxi/tramoya/blob/main/COMERCIAL.md).
+        **Este issue es público**: no pongas datos sensibles. Si preferís hablar en privado, dejá solo cómo contactarte.
+  - type: input
+    id: quien
+    attributes:
+      label: Empresa o persona
+      placeholder: Nombre de la empresa, agencia o freelancer
+    validations:
+      required: true
+  - type: input
+    id: contacto
+    attributes:
+      label: ¿Cómo te contacto?
+      description: Email, LinkedIn o lo que prefieras.
+    validations:
+      required: true
+  - type: dropdown
+    id: uso
+    attributes:
+      label: Tipo de uso
+      multiple: true
+      options:
+        - Uso interno en una empresa
+        - Trabajo pago para clientes (freelance o agencia)
+        - Integrarlo en un producto o servicio
+        - Otro
+    validations:
+      required: true
+  - type: input
+    id: personas
+    attributes:
+      label: ¿Cuántas personas lo van a usar?
+  - type: textarea
+    id: detalle
+    attributes:
+      label: Contame un poco más
+      description: Qué piezas vas a hacer, por cuánto tiempo, si vas a modificar el código, etc.

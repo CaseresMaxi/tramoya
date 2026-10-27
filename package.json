@@ -2,6 +2,7 @@
   "name": "tramoya",
   "version": "0.1.0",
   "description": "Presentaciones motion, reels, pósters, landings y marca en HTML estático, con un estudio en el navegador. Agent Skill.",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "type": "module",
   "bin": {
     "tramoya": "scripts/tramoya.mjs"
@@ -24,6 +25,8 @@
     "!motor/node_modules/**",
     "plantilla/",
     "referencias/",
-    "instalar.sh"
+    "instalar.sh",
+    "LICENSE.md",
+    "COMERCIAL.md"
   ]
 }

@@ -165,4 +165,17 @@ Más en [referencias/aprendizajes.md](referencias/aprendizajes.md).
 - Para la palabra de la marca en curvas: Python 3 con `fonttools` y `brotli`
   (`python3 herramientas/generar_glifos.py`).
 
-Fuentes incluidas: Playfair Display e Inter (SIL OFL 1.1). QR: qrcode-generator (MIT).
+Tipografías de la galería: SIL OFL 1.1 de sus autores (ver `motor/estilos/*/LICENCIAS.md`). QR: qrcode-generator (MIT).
+
+## Licencia
+
+**Gratis para uso no comercial** (personal, estudiantes y docentes, investigación, ONG y
+entes públicos), bajo la [PolyForm Noncommercial 1.0.0](LICENSE.md).
+
+**El uso comercial necesita una licencia comercial**, con precio a acordar. Es uso
+comercial usarlo en o para una empresa, en trabajo pago para clientes (freelance o
+agencia), o dentro de un producto o servicio. Condiciones en [COMERCIAL.md](COMERCIAL.md);
+la licencia se pide [acá](https://github.com/CaseresMaxi/tramoya/issues/new?template=licencia-comercial.yml).
+
+Lo que hagas con Tramoya (tus textos, imágenes y piezas exportadas) es tuyo. Para
+aportar, ver [CONTRIBUTING.md](CONTRIBUTING.md).
