@@ -1252,6 +1252,13 @@
 
   // ---------- Exportar / importar ----------
   const replaceDoc = (data, msg) => { doc = { escenas: data.escenas, estilo: conEstilo(data.estilo) }; save(); stage.dataset.theme = doc.estilo.tema; build(); T = 0; target = KEYS[0]?.t || 0; renderSceneList(); renderStyleForm(); U.toast(msg); };
+  // Deshacer / rehacer (Ctrl+Z): se rearma con lo restaurado y se queda en el mismo punto clave
+  U.alRestaurar('motion', (v) => {
+    doc = v && Array.isArray(v.escenas) ? { escenas: v.escenas, estilo: conEstilo(v.estilo) } : fresh();
+    stage.dataset.theme = doc.estilo.tema; grano();
+    if (selF && !doc.escenas.includes(selF.d)) selF = null;
+    rebuild(); renderSceneList(); renderSceneForm(); renderStyleForm(); renderInspector(); renderCorrections();
+  });
   $('exportJson').onclick = () => U.descargar(`${P.id}-motion.json`, JSON.stringify(doc, null, 2), 'application/json');
   $('importJson').onclick = () => $('importFile').click();
   $('importFile').onchange = async (e) => {

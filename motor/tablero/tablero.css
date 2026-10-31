@@ -224,6 +224,10 @@ label.chk input{accent-color:var(--t-acento)}
 .bloque p{margin:0; color:var(--t-suave); font-size:13px}
 .bloque .acc{display:flex; gap:8px; flex-wrap:wrap; margin-top:auto; padding-top:4px}
 .bloque ol{margin:0; padding-left:20px; color:var(--t-suave); display:grid; gap:8px}
+.hist summary{cursor:pointer; padding:6px 0}
+.hist ul{list-style:none; margin:6px 0 4px; padding:0; display:grid; gap:6px}
+.hist li{display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:13px; color:var(--t-suave)}
+.hist .btn{padding:4px 10px; font-size:12px}
 
 /* ---------- Diálogo ---------- */
 .velo{position:fixed; inset:0; background:rgba(5,5,7,.72); backdrop-filter:blur(6px); display:grid; place-items:center; z-index:50}

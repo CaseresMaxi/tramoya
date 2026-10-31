@@ -32,7 +32,10 @@ este archivo es para trabajar *en* la skill.
   en cada acceso porque `estado.js` carga después.
 - **Toda pieza editable guarda con `TRAMOYA.guardar(sub, v)`** y lee con
   `TRAMOYA.leer(sub, def)`: así queda en `proyecto/estado/<sub>.json` con el servidor y
-  en localStorage sin él, y el render (`?render`) usa solo lo de archivos.
+  en localStorage sin él, y el render (`?render`) usa solo lo de archivos. Cada `guardar`
+  es un paso de deshacer (Ctrl+Z, en `util.js`); una pieza que se puede rearmar sin
+  recargar registra `TRAMOYA.alRestaurar(sub, fn)` (si no, se recarga). El servidor guarda
+  la versión anterior en `proyecto/estado/.historial/` (`historial`, `restaurar`).
 - **La API cuelga de la raíz del proyecto** (`TRAMOYA.BASE` + `__tramoya`), nunca de `/`:
   en el estudio cada proyecto vive en `/p/<carpeta>/`.
 - **Servidor**: solo `127.0.0.1`, rechaza otro `Host` y escrituras con otro `Origin`;

@@ -102,6 +102,51 @@ function estadoJS(P) {
   escribirSiCambia(join(P, 'proyecto', 'estado.js'), '// Generado por tramoya a partir de proyecto/estado/*.json. No editar a mano.\nwindow.ESTADO = ' + JSON.stringify(E) + ';\n');
   return E;
 }
+// Historial: antes de pisar o borrar proyecto/estado/<sub>.json se guarda una copia en
+// proyecto/estado/.historial/<sub>/<fecha>.json (como mucho una cada `cada` ms al editar, para
+// no guardar una por tecla; las últimas MAX_HIST). `tramoya historial` las lista y
+// `tramoya restaurar` vuelve a una (guardando antes la actual: también se deshace).
+const MAX_HIST = 40;
+const dirHist = (P, sub) => join(P, 'proyecto', 'estado', '.historial', sub);
+function versiones(P, sub) {
+  const d = dirHist(P, sub);
+  return existsSync(d) ? readdirSync(d).filter((n) => /^\d+\.json$/.test(n)).sort().reverse().map((n) => ({ n, t: +n.slice(0, -5), f: join(d, n) })) : [];
+}
+function instantanea(P, sub, cada = 0) {
+  const f = join(P, 'proyecto', 'estado', sub + '.json');
+  if (!existsSync(f)) return false;
+  const vs = versiones(P, sub), ahora = Date.now();
+  if (cada && vs[0] && ahora - vs[0].t < cada) return false;
+  const txt = readFileSync(f, 'utf8');
+  if (vs[0] && readFileSync(vs[0].f, 'utf8') === txt) return false;
+  mkdirSync(dirHist(P, sub), { recursive: true });
+  writeFileSync(join(dirHist(P, sub), `${ahora}.json`), txt);
+  vs.slice(MAX_HIST - 1).forEach((v) => rmSync(v.f, { force: true }));
+  return true;
+}
+// Vuelve <sub> a su versión n (1 = la más reciente), guardando antes la actual; fecha nueva
+// para que gane sobre el borrador del navegador
+function restaurarVersion(P, sub, n = 1) {
+  const v = versiones(P, sub)[n - 1];
+  if (!v) throw new Error(`No hay versión ${n} de «${sub}» (ver \`tramoya historial ${sub}\`).`);
+  let j; try { j = JSON.parse(readFileSync(v.f, 'utf8')); } catch (e) { throw new Error('La copia no es JSON válido.'); }
+  const d = j && 'v' in j && 'rev' in j ? j : { rev: 0, v: j };
+  instantanea(P, sub);
+  writeFileSync(join(P, 'proyecto', 'estado', sub + '.json'), JSON.stringify({ rev: Date.now(), v: d.v }, null, 2) + '\n');
+  regenerar(P);
+  return v.t;
+}
+// Para listar: cada versión con su fecha y si es igual a lo que hay ahora
+function historialDe(P) {
+  const out = {};
+  for (const sub of subsConHistorial(P)) {
+    const f = join(P, 'proyecto', 'estado', sub + '.json'), ahora = existsSync(f) ? JSON.stringify(leerJSON(f)?.v ?? null) : null;
+    out[sub] = versiones(P, sub).map((v, i) => { const j = leerJSON(v.f); return { n: i + 1, t: v.t, fecha: new Date(v.t).toISOString(), igual: JSON.stringify(j && 'v' in j ? j.v : j) === ahora }; });
+  }
+  return out;
+}
+const subsConHistorial = (P) => { const d = join(P, 'proyecto', 'estado', '.historial'); return existsSync(d) ? readdirSync(d).filter((n) => statSync(join(d, n)).isDirectory()) : []; };
+
 // Estilos: los de la galería (estilos/<id>/ del motor) y los propios (proyecto/estilos/<id>/).
 // galeria.js los lista, porque desde file:// la galería no puede leer carpetas.
 const idsEn = (d) => (existsSync(d) ? readdirSync(d).filter((n) => existsSync(join(d, n, 'estilo.js'))).sort() : []);
@@ -419,11 +464,20 @@ function proyectoHTTP(P) {
           const d = await cuerpoJSON(req);
           if (!d || typeof d !== 'object' || !('v' in d)) return json(res, 400, { error: 'Falta v' });
           silencio = Date.now(); mkdirSync(dirname(f), { recursive: true });
+          instantanea(P, mEst[1], 30000);
           writeFileSync(f, JSON.stringify({ rev: +d.rev || Date.now(), v: d.v }, null, 2) + '\n');
-        } else if (M === 'DELETE') { silencio = Date.now(); rmSync(f, { force: true }); }
+        } else if (M === 'DELETE') { silencio = Date.now(); instantanea(P, mEst[1]); rmSync(f, { force: true }); }
         else return json(res, 405, { error: 'Método' });
         estadoJS(P); silencio = Date.now();
         avisar({ tipo: 'estado', sub: mEst[1], tab });
+        return json(res, 200, { ok: true });
+      }
+      if (api === 'historial' && M === 'GET') return json(res, 200, historialDe(P));
+      if (api === 'restaurar' && M === 'POST') {
+        const { sub, n } = (await cuerpoJSON(req)) || {};
+        if (!/^[a-z0-9][a-z0-9-]{0,60}$/i.test(String(sub || ''))) return json(res, 400, { error: 'Pieza inválida' });
+        try { silencio = Date.now(); restaurarVersion(P, sub, +n || 1); silencio = Date.now(); } catch (e) { return json(res, 400, { error: e.message }); }
+        avisar({ tipo: 'estado', sub, tab: null });
         return json(res, 200, { ok: true });
       }
       if (api === 'pendientes') return json(res, 200, { proyecto: idProyecto(P), estilo: estiloDe(P), items: pendientesDe(P, leerEstado(P, false), { todas: true }) });
@@ -595,6 +649,7 @@ ${c.b('Proyecto')}
   estado [--json]                                               qué editó el usuario y qué correcciones hay pendientes
   estilos · estilo <id>                                         galería de estilos · elegir uno (se copia a proyecto/estilo/)
   regenerar                                                     manifiesto de assets, galería y proyecto/estado.js
+  historial [pieza] [--guardar] · restaurar <pieza> [n]         versiones anteriores de lo editado · volver a una
 ${c.b('Salidas')}  ${c.d('(necesitan playwright-core y Chrome; video también ffmpeg)')}
   revisar <motion|reel|poster|landing|marca|x.html> [...]        un PNG por punto clave + errores de consola
   video <motion|reel|x.html> [--fps 30] [--salida x.mp4] [...]   MP4
@@ -683,6 +738,31 @@ Opción común: --en <carpeta del proyecto> (si no, se busca desde el directorio
       console.log(`\n${c.y(out.pendientes.length + ' pendiente(s): pedidos del tablero, correcciones y observaciones')}`);
       out.pendientes.forEach((p, i) => console.log(p.pieza === 'pedido' ? `  ${i + 1}. [pedido · ${p.tipo || 'general'}] ${p.texto || ''}${p.links?.length ? c.d(' · ' + p.links.join(' ')) : ''}${p.imagenes?.length ? c.d(' · imágenes: ' + p.imagenes.join(', ')) : ''}` : `  ${i + 1}. [${p.pieza}${p.escena ? ` · escena ${p.escena} paso ${p.paso ?? '?'}` : ''}${p.parte ? ` · ${p.parte}` : ''}${p.elemento ? ` · ${p.elemento}` : ''}${p.x != null ? ` · (${p.x}, ${p.y})` : ''}] ${p.texto || '(sin texto)'}${p.cita ? c.d(` «${p.cita}»`) : ''}`));
     }
+  },
+
+  // Versiones anteriores de lo editado (proyecto/estado/.historial/)
+  historial(A) {
+    const P = proyecto(A), sub = A._[0];
+    if (A.guardar) {
+      const subs = sub ? [sub] : readdirSync(join(P, 'proyecto', 'estado')).filter((n) => n.endsWith('.json')).map((n) => n.slice(0, -5));
+      const n = subs.filter((s) => instantanea(P, s)).length;
+      return console.log(`${c.g('✓')} ${n} copia(s) nueva(s) en proyecto/estado/.historial/`);
+    }
+    const subs = sub ? [sub] : subsConHistorial(P);
+    if (!subs.length) return console.log('Todavía no hay versiones anteriores: se guardan solas al editar con el estudio abierto (o con `tramoya historial --guardar`).');
+    if (A.json) { const H = historialDe(P); return console.log(JSON.stringify(Object.fromEntries(subs.map((s) => [s, H[s] || []])), null, 2)); }
+    subs.forEach((s) => {
+      console.log(`${c.b(s)} ${c.d(`(${versiones(P, s).length})`)}`);
+      const H = historialDe(P)[s] || [];
+    H.slice(0, sub ? MAX_HIST : 5).forEach((v) => console.log(`  ${String(v.n).padStart(2)}. ${new Date(v.t).toLocaleString()}${v.igual ? c.d('  (igual a la actual)') : ''}`));
+    });
+    console.log(c.d('\nVolver a una: tramoya restaurar <pieza> [n]   (1 = la más reciente; la actual queda guardada)'));
+  },
+  restaurar(A) {
+    const P = proyecto(A), sub = A._[0], n = +(A._[1] || 1);
+    if (!sub) throw new Error('Uso: tramoya restaurar <pieza> [n]  (ver `tramoya historial`)');
+    const t = restaurarVersion(P, sub, n);
+    console.log(`${c.g('✓')} ${sub}: vuelto a la versión del ${new Date(t).toLocaleString()} (la anterior quedó en el historial; con el estudio abierto, las páginas se recargan).`);
   },
 
   estilos(A) {
@@ -793,6 +873,6 @@ for (const cmd of ['revisar', 'video', 'poster', 'marca']) {
 }
 
 const [cmd = 'ayuda', ...resto] = process.argv.slice(2);
-const f = COMANDOS[cmd] || COMANDOS[{ help: 'ayuda', '-h': 'ayuda', '--help': 'ayuda', new: 'nuevo', open: 'abrir', status: 'estado', pack: 'empaquetar', import: 'importar', update: 'actualizar', install: 'instalar', init: 'iniciar', start: 'iniciar', studio: 'estudio' }[cmd]];
+const f = COMANDOS[cmd] || COMANDOS[{ help: 'ayuda', '-h': 'ayuda', '--help': 'ayuda', new: 'nuevo', open: 'abrir', status: 'estado', pack: 'empaquetar', import: 'importar', update: 'actualizar', install: 'instalar', init: 'iniciar', start: 'iniciar', studio: 'estudio', history: 'historial', restore: 'restaurar' }[cmd]];
 if (!f) { console.error(c.r(`Comando desconocido: ${cmd}`)); COMANDOS.ayuda(); process.exit(1); }
 await f(args(resto), resto);

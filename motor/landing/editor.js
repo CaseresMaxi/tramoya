@@ -299,4 +299,5 @@
   }
   L.abrir = abrir;
   L.alCambiar = armar;
+  L.alRestaurado = () => { if (L.editando) armar(); };
 })();

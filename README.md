@@ -15,7 +15,8 @@ imágenes, estilo, el movimiento de cada elemento, correcciones sobre un punto),
 arrastrables y un panel), el póster (parámetros y observaciones), la landing (textos en
 el lugar y secciones) y la marca (todos los parámetros y variantes con nombre). Lo que
 se edita **se guarda en archivos del proyecto** (`proyecto/estado/`), y el agente lo lee
-para seguir trabajando. Cada trabajo es **una carpeta autocontenida**: se versiona, se
+para seguir trabajando. Todo se puede **deshacer**: Ctrl+Z / Ctrl+Shift+Z en cada pieza, y
+versiones anteriores en el tablero (Llevar) o con `tramoya historial`. Cada trabajo es **una carpeta autocontenida**: se versiona, se
 zipea y se lleva a otra máquina o a otro repo.
 
 Es HTML, CSS y JS estático: se abre con doble clic, sin build. El CLI es Node puro, sin
@@ -119,6 +120,7 @@ node herramientas/tramoya.mjs empaquetar        # → mi-proyecto.zip, se abre e
 | `video <motion\|reel>` · `poster` · `marca` | MP4 · PNG + PDF · SVG/PNG del logo |
 | `estilos` · `estilo <id>` | La galería de estilos · elegir uno |
 | `empaquetar [--solo-proyecto]` · `importar <zip>` | Llevar y traer proyectos |
+| `historial` · `restaurar <pieza> [n]` | Versiones anteriores de lo editado · volver a una |
 | `actualizar` | Le pone a un proyecto el motor de la versión instalada |
 | `regenerar` · `manifiesto` | `proyecto/estado.js` y la lista de assets |
 | `instalar` · `doctor` | Instalar la skill · revisar dependencias |

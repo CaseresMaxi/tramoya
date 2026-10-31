@@ -18,6 +18,7 @@
 | T | Cambia de tema |
 | M | Desenfoque de movimiento sí/no |
 | E | Editor |
+| Ctrl+Z · Ctrl+Shift+Z | Deshacer · rehacer lo editado (fuera de un campo de texto; también ↶ ↷ abajo a la izquierda) |
 | C | Marcar una corrección (Esc cancela) |
 | F | Pantalla completa |
 | H | Ayuda |

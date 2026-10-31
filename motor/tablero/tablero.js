@@ -554,6 +554,8 @@
           ${SRV ? '<div class="acc"><button class="btn pri" id="bZip">Descargar .zip</button><button class="btn" id="bZipSolo">Solo proyecto/</button></div>' : `<p class="nota">Sin servidor: ${cmd(CLI + ' empaquetar')}</p>`}</div>
         <div class="bloque"><b>Lo editado (.json)</b><p>${SRV ? 'Lo editado en las piezas ya está en proyecto/estado/. Esto es para pasarlo a mano a otra copia.' : 'Abriste con doble clic: lo editado vive en este navegador. Exportalo para llevarlo a otra máquina o al proyecto.'}</p>
           <div class="acc"><button class="btn" id="bExp">Exportar lo editado</button><button class="btn" id="bImp">Importar…</button></div></div>
+        <div class="bloque"><b>Deshacer y versiones anteriores</b><p>En cada pieza, <b>Ctrl+Z</b> deshace y <b>Ctrl+Shift+Z</b> rehace (o ↶ ↷ abajo a la izquierda). Además, cada vez que se guarda, la versión anterior queda acá: se puede volver a cualquiera, y la que había queda guardada también.</p>
+          ${SRV ? '<div id="historial"><p class="nota">Cargando…</p></div>' : `<p class="nota">Las versiones las guarda el servidor: abrí el proyecto con ${cmd(CLI + ' estudio')}</p>`}</div>
         <div class="bloque"><b>Abrir este proyecto otra vez</b>
           <ol><li>Doble clic en <b>Abrir estudio</b> dentro de la carpeta (<code>.command</code> en macOS, <code>.bat</code> en Windows, <code>abrir-estudio.sh</code> en Linux).</li>
           <li>O en una terminal, en la carpeta: ${cmd(CLI + ' estudio')}</li>
@@ -564,9 +566,24 @@
           <li>Para tu agente (Claude Code, Codex, Cursor…): ${cmd('npx github:CaseresMaxi/tramoya instalar')}</li>
           <li>Que el repo la lleve: ${cmd('npx github:CaseresMaxi/tramoya iniciar --skill-local')} (copia la skill en <code>.claude/skills</code> y <code>.agents/skills</code>).</li></ol></div>
       </div>`;
-    if (SRV) { $('#bZip').onclick = () => { location.href = `${API}/paquete.zip`; }; $('#bZipSolo').onclick = () => { location.href = `${API}/paquete.zip?solo-proyecto`; }; }
+    if (SRV) { $('#bZip').onclick = () => { location.href = `${API}/paquete.zip`; }; $('#bZipSolo').onclick = () => { location.href = `${API}/paquete.zip?solo-proyecto`; }; pintarHistorial(); }
     $('#bExp').onclick = () => U.descargar(`${P.id}-estado.json`, JSON.stringify(U.exportarEstado(), null, 2), 'application/json');
     $('#bImp').onclick = () => $('#fImp').click();
+  }
+  const NOMBRES = { motion: 'Presentación', reel: 'Reel', landing: 'Landing', 'poster-cfg': 'Póster', 'poster-obs': 'Observaciones del póster', 'marca-editor': 'Marca', 'marca-variantes': 'Variantes de la marca', pedidos: 'Pedidos al agente' };
+  async function pintarHistorial() {
+    const box = $('#historial'); if (!box) return;
+    let H; try { H = await api('historial'); } catch (e) { box.innerHTML = `<p class="nota">${esc(e.message)}</p>`; return; }
+    const subs = Object.keys(H).filter((k) => H[k].length);
+    if (!subs.length) { box.innerHTML = '<p class="nota">Todavía no hay versiones anteriores: aparecen cuando se edita una pieza.</p>'; return; }
+    box.innerHTML = subs.map((sub) => `<details class="hist"><summary>${esc(NOMBRES[sub] || sub)} <span class="nota">· ${H[sub].length} versión(es)</span></summary>
+      <ul>${H[sub].slice(0, 12).map((v) => `<li>${esc(new Date(v.t).toLocaleString())}${v.igual ? ' <span class="nota">(igual a la actual)</span>' : ` <button class="btn" data-volver="${esc(sub)}" data-n="${v.n}">Volver a esta</button>`}</li>`).join('')}</ul></details>`).join('');
+    $$('[data-volver]', box).forEach((b) => (b.onclick = async () => {
+      const sub = b.dataset.volver, nombre = NOMBRES[sub] || sub;
+      if (!confirm(`¿Volver «${nombre}» a la versión del ${b.parentElement.firstChild.textContent}? Lo que hay ahora queda guardado como otra versión.`)) return;
+      try { await apiJSON('restaurar', 'POST', { sub, n: +b.dataset.n }); U.toast(`${nombre}: versión restaurada`); await refrescarEstado(); pintarHistorial(); }
+      catch (e) { U.toast(e.message); }
+    }));
   }
   $('#fImp').onchange = async (e) => {
     const f = e.target.files[0]; if (!f) return;

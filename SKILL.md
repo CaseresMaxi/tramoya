@@ -33,6 +33,7 @@ node herramientas/tramoya.mjs <comando>              # desde adentro de un proye
 | `estado` (`--json`) | Qué editó el usuario, sus **pedidos** desde el tablero y las **correcciones** pendientes |
 | `revisar <pieza>` | Un PNG por punto clave en `salida/revision/<pieza>/` + errores de consola (código 1 si hay) |
 | `video <motion\|reel>` · `poster` · `marca` | MP4 · PNG 300 dpi + PDF · SVG/PNG del logo, en `salida/` (marca: `proyecto/assets/logo/`) |
+| `historial [pieza] [--guardar]` · `restaurar <pieza> [n]` | Versiones anteriores de lo editado (`proyecto/estado/.historial/`) · volver a una (la actual queda guardada) |
 | `empaquetar` · `importar <zip>` · `actualizar` | Llevar el trabajo (zip) · traerlo · ponerle el motor nuevo |
 | `doctor` | Revisa Node, Chrome, ffmpeg y playwright-core |
 
@@ -137,7 +138,10 @@ Lo editado en el navegador vive en `proyecto/estado/<pieza>.json` (`motion`, `re
   borrá el `.json`. Lo mismo para cada pieza.
 - Después de editar un `.json` a mano: `tramoya regenerar`. Los comandos de render lo
   hacen solos, y con `estudio` (o `abrir`) corriendo las páginas abiertas se recargan.
-- No borres estado del usuario sin preguntar: es su trabajo.
+- No borres estado del usuario sin preguntar: es su trabajo. Antes de editar a mano un
+  `estado/*.json`, `tramoya historial --guardar`: así el cambio se puede deshacer
+  (`tramoya restaurar <pieza>`). El servidor ya guarda versiones solo cada vez que el
+  usuario edita, y en el navegador Ctrl+Z / Ctrl+Shift+Z deshacen y rehacen en cada pieza.
 - Si el usuario dice que "cambió algo" y no aparece en `estado`, lo abrió con doble clic
   y quedó en su navegador: pedile «Exportar lo editado» desde el tablero (`index.html`,
   sección Llevar) o que lo abra con `tramoya estudio`.

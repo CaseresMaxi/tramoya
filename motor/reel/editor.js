@@ -205,6 +205,14 @@
         info();
       }
 
+      // Deshacer / rehacer (Ctrl+Z): vuelve a armar el reel con lo restaurado, sin recargar
+      U.alRestaurar(CLAVE, (v) => {
+        doc = normalizar(v || DEF);
+        if (sel >= doc.partes.length) sel = doc.partes.length - 1;
+        if (sel < 0 && tab === 'parte') tab = 'reel';
+        cambio({ audio: true, estructura: true, guarda: false });
+      });
+
       function toggle(v = !abierto) {
         abierto = v;
         api.el.app.classList.toggle('rl-editing', v);

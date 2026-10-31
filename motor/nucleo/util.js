@@ -125,8 +125,9 @@
       location.reload();
     }
   });
-  function guardar(sub, v) {
+  function guardar(sub, v, { sinHistorial = false } = {}) {
     if (RENDER) return true;
+    if (!sinHistorial) registrar(sub, JSON.stringify(v));
     const rev = Date.now();
     const ok = ls.set(clave(sub), JSON.stringify(v)) && ls.set(clave(sub) + '@rev', String(rev));
     clearTimeout(pendientes[sub]);
@@ -145,12 +146,84 @@
     } catch (e) { ultimoError = e.message || 'sin conexión'; }
     enVuelo--; indicador();
   }
-  async function borrar(sub) {
+  async function borrar(sub, { sinHistorial = false } = {}) {
+    if (!sinHistorial && !RENDER) registrar(sub, null);
     ls.del(clave(sub)); ls.del(clave(sub) + '@rev');
     delete est()[sub];
     if (await servidor) await fetch(`${API}/estado/${encodeURIComponent(sub)}`, { method: 'DELETE', headers: { 'x-tramoya-tab': TAB } }).catch(() => {});
     indicador();
   }
+  // ---------- Deshacer / rehacer ----------
+  // Cada guardar() deja un paso { sub, antes, despues } (el JSON; antes null = no había nada
+  // guardado). Los cambios seguidos de la misma pieza en menos de 1 s son un solo paso (escribir
+  // una palabra no son diez). Vive en sessionStorage: sobrevive a las recargas de la pestaña.
+  // Al deshacer, la pieza que registró TRAMOYA.alRestaurar(sub, fn) se rearma en el lugar;
+  // si no, la página se recarga con lo restaurado. En el proyecto, además, el servidor guarda
+  // versiones anteriores (`tramoya historial`).
+  const restauradores = {}, actual = {};
+  let H = null, silencioHasta = 0;
+  const hist = () => {
+    if (H) return H;
+    try { H = JSON.parse(sessionStorage.getItem(clave('deshacer'))); } catch (e) {}
+    return (H = H && Array.isArray(H.pasos) ? H : { pasos: [], rehacer: [] });
+  };
+  function persistir() {
+    const h = hist();
+    for (;;) {
+      try { sessionStorage.setItem(clave('deshacer'), JSON.stringify(h)); return; } catch (e) {
+        if (!h.pasos.length && !h.rehacer.length) return;
+        if (h.rehacer.length > h.pasos.length) h.rehacer.shift(); else h.pasos.shift();
+      }
+    }
+  }
+  function registrar(sub, nuevo) {
+    const antes = sub in actual ? actual[sub] : (() => { const x = leer(sub, null); return x == null ? null : JSON.stringify(x); })();
+    actual[sub] = nuevo;
+    // Lo que la pieza vuelve a guardar al rearmarse después de deshacer no es un cambio nuevo
+    if (antes === nuevo || Date.now() < silencioHasta) return;
+    const h = hist(), u = h.pasos[h.pasos.length - 1], ahora = Date.now();
+    if (u && u.sub === sub && ahora - u.t < 1000 && !h.corte) { u.despues = nuevo; u.t = ahora; }
+    else h.pasos.push({ sub, antes, despues: nuevo, t: ahora });
+    h.corte = false; h.rehacer = [];
+    if (h.pasos.length > 80) h.pasos.shift();
+    persistir(); indicador();
+  }
+  async function aplicarPaso(p, txt, msg) {
+    const h = hist(), v = txt == null ? null : JSON.parse(txt);
+    actual[p.sub] = txt; h.corte = true; silencioHasta = Date.now() + 1500;
+    if (v == null) await borrar(p.sub, { sinHistorial: true }); else guardar(p.sub, v, { sinHistorial: true });
+    persistir(); indicador();
+    const nombre = { motion: 'la presentación', reel: 'el reel', landing: 'la landing', 'poster-cfg': 'el póster', 'poster-obs': 'las observaciones', 'marca-editor': 'la marca', 'marca-variantes': 'las variantes de la marca', pedidos: 'los pedidos' }[p.sub] || p.sub;
+    const fn = restauradores[p.sub];
+    if (fn) { fn(v == null ? null : clone(v)); toast(`${msg}: ${nombre}`); return; }
+    try { sessionStorage.setItem('tr-aviso', `${msg}: ${nombre}`); } catch (e) {}
+    while (Object.keys(pendientes).length || enVuelo) await new Promise((r) => setTimeout(r, 80));
+    location.reload();
+  }
+  function deshacer() {
+    const h = hist(), p = h.pasos.pop();
+    if (!p) return toast('No hay nada para deshacer en esta pestaña');
+    h.rehacer.push(p); aplicarPaso(p, p.antes, 'Deshecho');
+  }
+  function rehacer() {
+    const h = hist(), p = h.rehacer.pop();
+    if (!p) return toast('No hay nada para rehacer');
+    h.pasos.push(p); aplicarPaso(p, p.despues, 'Rehecho');
+  }
+  const alRestaurar = (sub, fn) => { restauradores[sub] = fn; };
+  if (!RENDER) {
+    addEventListener('keydown', (e) => {
+      if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+      const k = e.key.toLowerCase();
+      if (k !== 'z' && k !== 'y') return;
+      // En un campo de texto, Ctrl+Z es el del campo
+      if (e.target.closest?.('input, textarea, select') || e.target.isContentEditable) return;
+      e.preventDefault(); e.stopPropagation();
+      if (k === 'y' || e.shiftKey) rehacer(); else deshacer();
+    }, true);
+    addEventListener('DOMContentLoaded', () => { try { const m = sessionStorage.getItem('tr-aviso'); if (m) { sessionStorage.removeItem('tr-aviso'); setTimeout(() => toast(m), 300); } } catch (e) {} });
+  }
+
   // Todo el estado junto (para llevarlo a otra máquina sin servidor) y su vuelta
   function exportarEstado() {
     const pre = clave(''), subs = new Set(Object.keys(est()));
@@ -189,8 +262,10 @@
       : esperando ? ['#d7a54a', 'Guardando…', '']
       : srv ? ['#5fbf7a', 'Guardado en el proyecto', 'Se escribe en proyecto/estado/ (el agente lo lee de ahí)']
       : ['#8d877e', 'Solo en este navegador', 'Abrí el proyecto con `tramoya abrir` para que lo editado se guarde en archivos. Mientras tanto: Exportar estado en la portada.'];
-    el.innerHTML = `<i style="width:7px;height:7px;border-radius:50%;background:${color};display:inline-block"></i>${txt}`;
-    el.title = tip;
+    const h = hist(), b = (a, t, ok, k) => `<button type="button" data-h="${a}" title="${t} (${k})" ${ok ? '' : 'disabled'} style="all:unset;cursor:${ok ? 'pointer' : 'default'};opacity:${ok ? 1 : 0.35};padding:0 3px;font-size:13px;line-height:1">${a === 'd' ? '↶' : '↷'}</button>`;
+    el.innerHTML = `<i style="width:7px;height:7px;border-radius:50%;background:${color};display:inline-block"></i><span title="${tip}">${txt}</span>`
+      + `<span style="display:inline-flex;gap:2px;margin-left:4px;padding-left:6px;border-left:1px solid #3a3a42">${b('d', 'Deshacer', h.pasos.length, 'Ctrl+Z')}${b('r', 'Rehacer', h.rehacer.length, 'Ctrl+Shift+Z')}</span>`;
+    el.querySelectorAll('[data-h]').forEach((x) => { x.onclick = () => (x.dataset.h === 'd' ? deshacer() : rehacer()); });
   }
   if (!RENDER) addEventListener('DOMContentLoaded', () => indicador());
   // base64url: para pasar una configuración por la URL sin problemas de comillas
@@ -346,7 +421,7 @@
     ...(SIN_UI ? { sinIndicador: true } : {}),
     cl, lerp, prog, exOut, exIn, exInOut, backOut, spring, smooth, kf, speed,
     rgba, mixRGBA, mixHex, esc, md, plain, lines, pairs, nn, r2,
-    clave, leer, guardar, borrar, enc, dec, clone, descargar, copiar, toast,
+    clave, leer, guardar, borrar, deshacer, rehacer, alRestaurar, enc, dec, clone, descargar, copiar, toast,
     RENDER, servidor, exportarEstado, importarEstado, subirArchivo,
     instalarFuentes, instalarTemas, fuentesListas,
   });

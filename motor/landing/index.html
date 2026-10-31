@@ -162,6 +162,8 @@
       });
     }
     LANDING.render = render;
+    // Deshacer / rehacer (Ctrl+Z): se redibuja con lo restaurado (y el panel, si está abierto)
+    U.alRestaurar('landing', (v) => { LANDING.doc = v ? normalizar(v) : base(); render(); LANDING.alRestaurado?.(); });
     Object.entries(P.temas).forEach(([k, t]) => $('tema').add(new Option(t.nombre || k, k)));
     $('tema').onchange = (e) => {
       if (LANDING.editando) { LANDING.doc.tema = e.target.value; LANDING.guardar(); LANDING.alCambiar?.(); }
