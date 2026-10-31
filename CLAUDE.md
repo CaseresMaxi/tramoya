@@ -16,17 +16,19 @@ este archivo es para trabajar *en* la skill.
 | `motor/index.html` + `motor/tablero/` | Tablero del proyecto: piezas, estilo, pedidos al agente, editor de código (`codigo.js`, hecho a mano), salidas y llevar. Degrada sin servidor |
 | `motor/nucleo/util.js` | Curvas, colores, texto, **estado** (`leer`/`guardar`/`borrar`: `proyecto/estado.js` + localStorage + servidor), fuentes y temas |
 | `motor/motion/` · `reel/` · `poster/` · `landing/` · `marca/` | Cada pieza con su editor |
+| `motor/motion/movimientos.js` | Repertorio abierto de movimientos (entradas, acentos, bucles) y coreografías por rol; `motor.js` los resuelve por escena (`mov`, `coreografia`, `transicion`) y publica `window.PARTITURA`, que `revisar` vuelve `partitura.md` con avisos de repetición |
 | `motor/render/*.mjs` | Revisión, video, póster, marca (Playwright + Chrome headless) |
 | `motor/estilos/` | Galería: `<id>/estilo.js` + `fuentes/` (OFL) y `index.html`. Ningún estilo por defecto: sin elegir, el neutro de `util.js`. Formato y perillas en `referencias/estilos.md` |
 | `plantilla/proyecto/` | Proyecto de ejemplo que copia `nuevo` (solo contenido; el look sale del estilo) |
-| `referencias/` | Docs que el agente lee bajo demanda: `motion.md`, `piezas.md`, `estilos.md`, `aprendizajes.md` |
+| `referencias/` | Docs que el agente lee bajo demanda: `movimiento.md`, `motion.md`, `piezas.md`, `estilos.md`, `aprendizajes.md` |
 
 ## Reglas
 
 - **Motor y proyecto separados**: nada de nombres, colores ni textos de un proyecto en
   `motor/`. Lo propio de un proyecto va en su `proyecto/`.
 - **Orden de carga en las páginas**: `nucleo/util.js` → `proyecto/proyecto.js` →
-  `proyecto/estilo/estilo.js` → `proyecto/estado.js` → `nucleo/marca.js` → el resto. `util.js` lee `window.ESTADO`
+  `proyecto/estilo/estilo.js` → `proyecto/estado.js` → `nucleo/marca.js` → el resto (en
+  la presentación, `motion/movimientos.js` antes de `tipos.js` y de `proyecto/tipos.js`). `util.js` lee `window.ESTADO`
   en cada acceso porque `estado.js` carga después.
 - **Toda pieza editable guarda con `TRAMOYA.guardar(sub, v)`** y lee con
   `TRAMOYA.leer(sub, def)`: así queda en `proyecto/estado/<sub>.json` con el servidor y
@@ -35,6 +37,10 @@ este archivo es para trabajar *en* la skill.
   en el estudio cada proyecto vive en `/p/<carpeta>/`.
 - **Servidor**: solo `127.0.0.1`, rechaza otro `Host` y escrituras con otro `Origin`;
   rutas siempre contra `P + sep`; el editor de código solo toca texto dentro de `proyecto/`.
+- **La forma se adapta al contenido, no al revés**: nada en el motor debería obligar a
+  meter contenido en una forma. Un movimiento nuevo va al registro (`registrarMovimiento`),
+  no a un `switch`; los tipos marcan roles y campos, y la escena decide cómo se mueven. Si
+  algo solo se puede hacer con un tipo, falta una puerta (`libre`, `mov`, un campo).
 - **Contrato de render** (`window.ready`, `seek`, `DURACION`, `CLAVES`, `renderAudio`):
   ver `motor/render/comun.mjs`.
 

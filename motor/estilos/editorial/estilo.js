@@ -43,7 +43,7 @@ TRAMOYA.registrarEstilo({
     base: { forma: 'monograma', radio: 0, peso: 600, tracking: -10, isoEscala: 1.2 },
     variantes: { anillo: { forma: 'anillo', grosor: 4 } },
   },
-  motion: { tema: 'papel', transicion: 'morph', entrada: 'suave', ritmo: 1.25, duracion: 1.6, velocidad: 0.9, desenfoque: false, grano: 0.05, cromo: true },
+  motion: { tema: 'papel', transicion: 'morph', entrada: 'suave', ritmo: 1.25, duracion: 1.6, velocidad: 0.9, desenfoque: false, grano: 0.05, cromo: true, coreografias: ['tipo', 'editorial', 'sobria'] },
   reel: { bpm: 92, sonido: { activo: true, volumen: 0.8, progresion: 'melancolica', acordes: true, bombo: false, golpes: 'partes', riser: false } },
   // Itálica liviana para el acento y filete fino bajo el antetítulo
   css: `

@@ -43,7 +43,7 @@ TRAMOYA.registrarEstilo({
     base: { forma: 'anillo', grosor: 10, peso: 700, tracking: -20, isoEscala: 1.15 },
     variantes: { puntos: { forma: 'puntos', radio: 6 } },
   },
-  motion: { tema: 'claro', transicion: 'camara', entrada: 'suave', ritmo: 1, duracion: 1.3, recorrido: 0.8, velocidad: 1, desenfoque: false, grano: false, cromo: true },
+  motion: { tema: 'claro', transicion: 'camara', entrada: 'suave', ritmo: 1, duracion: 1.3, recorrido: 0.8, velocidad: 1, desenfoque: false, grano: false, cromo: true, coreografias: ['tipo', 'sobria', 'editorial'] },
   reel: { bpm: 116, sonido: { activo: true, volumen: 0.8, progresion: 'luminosa', acordes: true, bombo: true, golpes: 'partes', riser: true } },
   // Antetítulo en pastilla
   css: `

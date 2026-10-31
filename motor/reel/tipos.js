@@ -21,10 +21,11 @@
 // entra cada cosa) y en segundos para los movimientos (cuánto tarda en llegar).
 (function () {
   const U = window.TRAMOYA;
-  const { cl, lerp, prog, exOut, exIn, spring, speed, r2, esc } = U;
+  const { cl, lerp, prog, exOut, exIn, spring, speed, r2, esc, backOut } = U;
 
   const color = (key, label, tema) => ({ key, label, type: 'color', def: '', tema });
   const FUENTES = { display: 'Tipografía de títulos', texto: 'Tipografía de texto' };
+  const ENTRADAS = { sube: 'Suben desde atrás de su máscara', cae: 'Caen y rebotan', escala: 'Saltan (escala)', enfoca: 'Se enfocan', golpe: 'De golpe, una por una' };
 
   // ---------- Frase con palabras que suben desde atrás de su máscara ----------
   // *texto* va en acento. Respeta los saltos de línea y corta lo que no entra en "ancho".
@@ -45,7 +46,7 @@
       return out;
     });
   }
-  function frase(tl, p, h, { x, y, ancho, alinear = 'centro', size, tinta, acento, salida = 'sube', escalon = 0.08, peso = 800, italica = true, fuente = 'display' }) {
+  function frase(tl, p, h, { x, y, ancho, alinear = 'centro', size, tinta, acento, salida = 'sube', entrada = 'sube', escalon = 0.08, peso = 800, italica = true, fuente = 'display' }) {
     const { medir, texto, blur } = h, font = h.fuente(fuente);
     const opt = (w) => ({ italic: italica && w.acc, weight: peso, font });
     const sp = medir(' ', size, { weight: peso, font }), lh = size * 1.08;
@@ -67,12 +68,20 @@
     lineas.forEach((L, li) => {
       const base = y - ((lineas.length - 1) * lh) / 2 + li * lh + size * 0.35;
       const x0 = alinear === 'centro' ? x - L.w / 2 : x, id = h.id('fr' + li);
-      s += `<clipPath id="${id}"><rect x="-200" y="${r2(base - size * 0.98)}" width="2320" height="${r2(size * 1.32)}"/></clipPath><g clip-path="url(#${id})">`;
+      const mascara = entrada === 'sube' || entrada === 'cae' || salida === 'sube';
+      s += mascara ? `<clipPath id="${id}"><rect x="-200" y="${r2(base - size * 0.98)}" width="2320" height="${r2(size * 1.32)}"/></clipPath><g clip-path="url(#${id})">` : '<g>';
       L.ws.forEach((w) => {
-        const d = exOut(prog(tl, 0.04 + k * escalon, 0.55));
-        let dy = lh * (1 - d);
+        // Cómo llega cada palabra: sube (de atrás de su máscara) · cae · escala · enfoca · golpe
+        const t0 = 0.04 + k * escalon, cx = x0 + w.x + w.w / 2, cy = base - size * 0.35;
+        let dy = 0, op = 1, sc = 1;
+        if (entrada === 'cae') dy = -lh * (1 - spring(prog(tl, t0, 0.7)));
+        else if (entrada === 'escala') { const q = prog(tl, t0, 0.45); sc = q > 0 ? 0.3 + 0.7 * backOut(q) : 0; op = cl(q * 3); }
+        else if (entrada === 'enfoca') { op = exOut(prog(tl, t0, 0.6)); sc = 1.25 - 0.25 * op; }
+        else if (entrada === 'golpe') op = tl >= t0 ? 1 : 0;
+        else dy = lh * (1 - exOut(prog(tl, t0, 0.55)));
         if (salida === 'sube') dy -= lh * 1.1 * exIn(prog(tl, h.dur + k * 0.02, 0.3));
-        s += `<g transform="translate(${r2(dx)} ${r2(dy)})">${texto(w.t, x0 + w.x, base, size, w.acc ? acento : tinta, opt(w))}</g>`;
+        const zoom = sc !== 1 ? ` translate(${r2(cx)} ${r2(cy)}) scale(${r2(sc)}) translate(${r2(-cx)} ${r2(-cy)})` : '';
+        if (op > 0) s += `<g transform="translate(${r2(dx)} ${r2(dy)})${zoom}"${op < 1 ? ` opacity="${r2(op)}"` : ''}>${texto(w.t, x0 + w.x, base, size, w.acc ? acento : tinta, opt(w))}</g>`;
         k++;
       });
       s += '</g>';
@@ -137,6 +146,7 @@
         { key: 'palabras', label: 'Palabras (una por línea)', type: 'textarea', def: 'Una\nidea\nen\nmovimiento.' },
         { key: 'cada', label: 'Pulsos por palabra', type: 'range', min: 0.5, max: 4, step: 0.5, def: 1 },
         { key: 'tamano', label: 'Tamaño', type: 'range', min: 80, max: 400, step: 5, def: 230, unit: 'px' },
+        { key: 'entrada', label: 'Cómo llega cada palabra', type: 'select', options: ENTRADAS, def: 'sube' },
         { key: 'ultima', label: 'La última en acento e itálica', type: 'check', def: true },
         { key: 'fuente', label: 'Tipografía', type: 'select', options: FUENTES, def: 'display' },
         color('tinta', 'Color', 'tinta'), color('acento', 'Color de acento', 'acento'),
@@ -149,9 +159,11 @@
         let s = '';
         [j - 1, j].forEach((i) => {
           if (i < 0) return;
-          const t0 = i * BE, inn = exOut(prog(tl, t0, 0.3)), out = i < j ? exOut(prog(tl, t0 + BE, 0.3)) : exIn(prog(tl, h.dur, 0.25));
-          const y = CY + 80 * z + 160 * z * (1 - inn) - 220 * z * out, last = p.ultima && i === PAL.length - 1;
-          s += `<g opacity="${r2(inn * (1 - out))}">${texto(PAL[i], CX, y, p.tamano, last ? p.acento : p.tinta, { anchor: 'middle', italic: last, font: h.fuente(p.fuente) })}</g>`;
+          const t0 = i * BE, out = i < j ? exOut(prog(tl, t0 + BE, 0.3)) : exIn(prog(tl, h.dur, 0.25)), e = p.entrada || 'sube';
+          const q = prog(tl, t0, e === 'cae' ? 0.6 : 0.3), inn = e === 'golpe' ? (tl >= t0 ? 1 : 0) : e === 'cae' ? spring(q) : exOut(q);
+          const dy = e === 'sube' ? 160 * z * (1 - inn) : e === 'cae' ? -260 * z * (1 - inn) : 0, sc = e === 'escala' ? 0.3 + 0.7 * backOut(q) : e === 'enfoca' ? 1.3 - 0.3 * inn : 1;
+          const y = CY + 80 * z + dy - 220 * z * out, last = p.ultima && i === PAL.length - 1, op = e === 'cae' ? cl(q * 4) : e === 'escala' ? cl(q * 3) : inn;
+          s += `<g opacity="${r2(op * (1 - out))}" transform="translate(${CX} ${r2(CY)}) scale(${r2(sc)}) translate(${-CX} ${r2(-CY)})">${texto(PAL[i], CX, y, p.tamano, last ? p.acento : p.tinta, { anchor: 'middle', italic: last, font: h.fuente(p.fuente) })}</g>`;
         });
         return s;
       },
@@ -240,6 +252,7 @@
         { key: 'tamano', label: 'Tamaño', type: 'range', min: 60, max: 320, step: 2, def: 150, unit: 'px' },
         { key: 'alinear', label: 'Alineación', type: 'select', options: { centro: 'Centrada', izquierda: 'A la izquierda' }, def: 'centro' },
         { key: 'y', label: 'Altura', type: 'range', min: -400, max: 400, step: 5, def: 0, unit: 'px' },
+        { key: 'entrada', label: 'Cómo llegan las palabras', type: 'select', options: ENTRADAS, def: 'sube', hint: 'Elegila por lo que dice la frase: una afirmación fuerte cae, un remate salta, algo íntimo se enfoca.' },
         { key: 'escalon', label: 'Retardo entre palabras', type: 'range', min: 0, max: 0.4, step: 0.01, def: 0.08, unit: ' s' },
         { key: 'salida', label: 'Salida en el corte', type: 'select', options: { sube: 'Suben y se van', barrido: 'Barrido a la izquierda', corte: 'Corte seco' }, def: 'sube' },
         { key: 'italica', label: 'Acento en itálica', type: 'check', def: true },
@@ -249,7 +262,7 @@
       resumen: (p) => U.plain(p.texto),
       dibujar(tl, p, h) {
         const izq = p.alinear === 'izquierda';
-        return frase(tl, p.texto, h, { x: izq ? 160 : h.CX, y: h.CY + p.y, ancho: izq ? 1600 : 1640, alinear: p.alinear, size: p.tamano, tinta: p.tinta, acento: p.acento, salida: p.salida, escalon: p.escalon, italica: p.italica, fuente: p.fuente });
+        return frase(tl, p.texto, h, { x: izq ? 160 : h.CX, y: h.CY + p.y, ancho: izq ? 1600 : 1640, alinear: p.alinear, size: p.tamano, tinta: p.tinta, acento: p.acento, salida: p.salida, entrada: p.entrada, escalon: p.escalon, italica: p.italica, fuente: p.fuente });
       },
     },
 
@@ -324,6 +337,32 @@
         });
         return s;
       },
+    },
+  };
+
+  // Un dibujo a medida (SVG de 1920 × 1080 escrito para este reel): se arma, se queda y se va
+  TIPOS.ilustracion = {
+    nombre: 'Ilustración (SVG a medida)', pulsos: 4, cola: 0.35,
+    campos: [
+      { key: 'svg', label: 'SVG (lo de adentro de <svg>, en un lienzo de 1920 × 1080)', type: 'textarea', def: '<circle cx="960" cy="540" r="260" fill="none" stroke="currentColor" stroke-width="24"/>' },
+      { key: 'entrada', label: 'Cómo se arma', type: 'select', options: { trazo: 'Se dibuja (trazo)', escala: 'Crece desde el centro', fundido: 'Fundido', barrido: 'Barrido', sube: 'Sube' }, def: 'trazo' },
+      { key: 'dura', label: 'Cuánto tarda en armarse', type: 'range', min: 0.2, max: 4, step: 0.1, def: 1.2, unit: ' s' },
+      { key: 'latido', label: 'Late con el bombo', type: 'range', min: 0, max: 0.15, step: 0.01, def: 0 },
+      { key: 'salida', label: 'Salida en el corte', type: 'select', options: { fundido: 'Fundido', barrido: 'Barrido a la izquierda', corte: 'Corte seco' }, def: 'fundido' },
+      color('tinta', 'Color (currentColor)', 'tinta'),
+    ],
+    resumen: (p) => p.entrada,
+    dibujar(tl, p, h) {
+      const { CX, CY, kick, W, H } = h, e = p.entrada, q = prog(tl, 0, p.dura), d = exOut(q);
+      const out = p.salida === 'corte' ? (tl >= h.dur ? 1 : 0) : exIn(prog(tl, h.dur, 0.35));
+      if (out >= 1) return '';
+      let svg = String(p.svg || '');
+      if (e === 'trazo') svg = svg.replace(/<(path|line|circle|rect|polyline|polygon|ellipse)\b/g, `<$1 pathLength="1" stroke-dasharray="1" stroke-dashoffset="${r2(1 - d)}"`);
+      const sc = (e === 'escala' ? lerp(0.2, 1, backOut(q)) : 1) * (1 + p.latido * kick(tl));
+      const dy = e === 'sube' ? 200 * (1 - d) : 0, dx = p.salida === 'barrido' ? -2200 * out : 0;
+      const op = (e === 'fundido' ? d : e === 'escala' ? cl(q * 3) : 1) * (p.salida === 'fundido' ? 1 - out : 1);
+      const id = h.id('il'), clip = e === 'barrido' ? `<clipPath id="${id}"><rect x="0" y="0" width="${r2(W * d)}" height="${H}"/></clipPath>` : '';
+      return `${clip}<g color="${p.tinta}" opacity="${r2(op)}"${clip ? ` clip-path="url(#${id})"` : ''} transform="translate(${r2(dx)} ${r2(dy)}) translate(${CX} ${CY}) scale(${r2(sc)}) translate(${-CX} ${-CY})">${svg}</g>`;
     },
   };
 

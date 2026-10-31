@@ -11,7 +11,7 @@ todas las piezas de un proyecto a partir de los mismos datos:
 - la **marca**: logo paramétrico con variantes, en SVG y PNG.
 
 Cada pieza **abre con su editor** en el navegador: la presentación (escenas, textos,
-imágenes, estilo, correcciones sobre un punto), el reel (línea de tiempo con partes
+imágenes, estilo, el movimiento de cada elemento, correcciones sobre un punto), el reel (línea de tiempo con partes
 arrastrables y un panel), el póster (parámetros y observaciones), la landing (textos en
 el lugar y secciones) y la marca (todos los parámetros y variantes con nombre). Lo que
 se edita **se guarda en archivos del proyecto** (`proyecto/estado/`), y el agente lo lee
@@ -131,7 +131,7 @@ node herramientas/tramoya.mjs empaquetar        # → mi-proyecto.zip, se abre e
 | `scripts/tramoya.mjs` | El CLI (entrada de la skill; `bin` del `package.json`) |
 | `motor/` | El motor que se copia a cada proyecto: `tablero/` (y `index.html`), `nucleo/`, `motion/`, `reel/`, `poster/`, `landing/`, `marca/`, `render/`, `herramientas/` (CLI, servidor, inicio del estudio), lanzadores |
 | `plantilla/proyecto/` | El proyecto de ejemplo (Tramoya contándose a sí misma) |
-| `referencias/` | [motion](referencias/motion.md), [otras piezas](referencias/piezas.md), [aprendizajes](referencias/aprendizajes.md) |
+| `referencias/` | [movimiento](referencias/movimiento.md), [motion](referencias/motion.md), [otras piezas](referencias/piezas.md), [estilos](referencias/estilos.md), [aprendizajes](referencias/aprendizajes.md) |
 | `instalar.sh` | Instalador |
 
 Un proyecto generado tiene esta forma:
@@ -153,6 +153,11 @@ tramoya/
   ve en el navegador.
 - **Los datos van aparte.** El motor no sabe de qué trata el proyecto; lo propio va en
   `proyecto/`.
+- **La forma sale del contenido.** Los tipos de escena son formas disponibles, no un
+  molde: cada escena elige cómo se mueve (coreografía, movimiento por elemento,
+  transición), y si nada sirve se escribe a medida (escena `libre`, un tipo o un
+  movimiento propio). `revisar` arma una partitura del movimiento y avisa cuando se
+  repite sin motivo. Ver [movimiento](referencias/movimiento.md).
 - **Editar no es un paso final.** Cada pieza tiene su editor, lo editado queda en
   archivos y el agente lo lee: se itera entre las dos manos.
 - **Mirar el resultado en un navegador real** antes de dar algo por hecho.

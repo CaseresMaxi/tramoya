@@ -42,6 +42,6 @@ TRAMOYA.registrarEstilo({
       'mono blanco': { tinta: '#ffffff', acento: '#ffffff', fondo: '#0d0d0f', claro: { tinta: '#000000', acento: '#000000', fondo: '#ffffff' } },
     },
   },
-  motion: { tema: 'noche', transicion: 'franjas', velocidad: 1, desenfoque: true, grano: true, cromo: true },
+  motion: { tema: 'noche', transicion: 'franjas', velocidad: 1, desenfoque: true, grano: true, cromo: true, coreografias: ['tipo', 'editorial', 'cinetica'] },
   reel: { bpm: 120, sonido: { activo: true, volumen: 0.9, progresion: 'epica', acordes: true, bombo: true, golpes: 'compas', riser: true } },
 });

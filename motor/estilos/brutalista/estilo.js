@@ -43,7 +43,7 @@ TRAMOYA.registrarEstilo({
     base: { forma: 'franjas', n: 3, grosor: 15, inclinacion: 0, colorFranjas: 'bandera', radio: 0, peso: 700, tracking: -10 },
     variantes: { bloque: { forma: 'monograma', radio: 0, peso: 700 } },
   },
-  motion: { tema: 'hormigon', transicion: 'franjas', franjas: { n: 2, color: 'tinta', grosor: 1.7 }, entrada: 'escalon', ritmo: 0.75, duracion: 1, recorrido: 1, velocidad: 1.15, desenfoque: false, grano: false, cromo: true },
+  motion: { tema: 'hormigon', transicion: 'franjas', franjas: { n: 2, color: 'tinta', grosor: 1.7 }, entrada: 'escalon', ritmo: 0.75, duracion: 1, recorrido: 1, velocidad: 1.15, desenfoque: false, grano: false, cromo: true, coreografias: ['tipo', 'impacto', 'quieta'] },
   reel: { bpm: 140, sonido: { activo: true, volumen: 0.9, progresion: 'tension', acordes: false, bombo: true, golpes: 'compas', riser: true } },
   // El acento de los títulos como bloque de color (resaltador), en todas las piezas
   css: `

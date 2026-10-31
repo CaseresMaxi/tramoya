@@ -5,7 +5,7 @@
 // render(T), función pura del tiempo: se puede pausar, rebobinar, recorrer y renderizar.
 //
 // Necesita, en este orden: nucleo/util.js, proyecto/proyecto.js, nucleo/marca.js,
-// proyecto/manifiesto.js, proyecto/glifos.js, motion/tipos.js, proyecto/tipos.js,
+// proyecto/manifiesto.js, proyecto/glifos.js, motion/movimientos.js, motion/tipos.js, proyecto/tipos.js,
 // proyecto/escenas.js. El marcado del escenario y del editor está en motion/index.html.
 (function () {
   const U = window.TRAMOYA, P = window.PROYECTO, M = U.marca;
@@ -16,9 +16,9 @@
   const alSubir = (m) => { if (m) Object.assign(MANIFIESTO, m); };
   const $ = (id) => document.getElementById(id);
   const stage = $('stage');
-  // D: duración de cada transición (s) · SPAN: cuánto viaja la cámara (px). Los ajusta el estilo (duracion, recorrido).
+  // SPAN: cuánto viaja la cámara (px). La duración de cada transición va en TR[i].D (estilo.duracion, o la de la escena).
   const W = 1920, CX = 960, CY = 540;
-  let D = 1.5, SPAN = 900;
+  let SPAN = 900;
   const q = new URLSearchParams(location.search);
   const RENDER = q.has('render');
   if (RENDER) document.body.classList.add('render');
@@ -37,16 +37,17 @@
   //   entrada    curva de las entradas: expo | suave | resorte | lineal | escalon
   //   ritmo      multiplica duración, retardo y desfase de cada entrada (2 = el doble de lento)
   //   distancia  cuánto se desplaza lo que entra (up, left, right) · franjas: { n, color, grosor }
+  //   coreografia  la de base (motion/movimientos.js) · coreografias: rotación cuando se repite el tipo · variar: false la apaga
   const ESTILO_DEF = { tema: Object.keys(P.temas)[0], logo: M.hayEditor() ? 'editor' : 'tema', transicion: 'franjas', desenfoque: true, velocidad: 1, grano: true, cromo: true, pie: '',
-    duracion: 1.5, recorrido: 1, entrada: 'expo', ritmo: 1, distancia: 1, ...(P.estilo || {}) };
+    duracion: 1.5, recorrido: 1, entrada: 'expo', ritmo: 1, distancia: 1, coreografia: 'tipo', variar: true, ...(P.estilo || {}) };
   ESTILO_DEF.franjas = { n: 4, color: 'mixto', grosor: 1, ...(P.estilo?.franjas || {}) };
   if (M.hayEditor() && !P.estilo?.logo) ESTILO_DEF.logo = 'editor';
   // El "look" lo trae el estilo: si lo guardado se hizo con otro estilo (o se está previsualizando
   // uno con ?estilo=), estas claves vuelven a las del estilo actual; el resto (pie, logo…) se queda.
-  const LOOK = ['tema', 'transicion', 'velocidad', 'desenfoque', 'grano', 'cromo', 'duracion', 'recorrido', 'entrada', 'ritmo', 'distancia', 'franjas'];
+  const LOOK = ['tema', 'transicion', 'velocidad', 'desenfoque', 'grano', 'cromo', 'duracion', 'recorrido', 'entrada', 'ritmo', 'distancia', 'franjas', 'coreografia', 'coreografias', 'variar'];
   const conEstilo = (e = {}) => {
     const out = { ...ESTILO_DEF, ...e };
-    if (P.estiloPrueba || (e.estiloBase || null) !== (P.estiloId || null)) LOOK.forEach((k) => { out[k] = U.clone(ESTILO_DEF[k]); });
+    if (P.estiloPrueba || (e.estiloBase || null) !== (P.estiloId || null)) LOOK.forEach((k) => { out[k] = ESTILO_DEF[k] === undefined ? undefined : U.clone(ESTILO_DEF[k]); });
     out.tema = U.temaValido(out.tema);
     out.estiloBase = P.estiloId;
     return out;
@@ -100,7 +101,7 @@
 
   // ---------- Construcción: una capa por escena, medida una vez ----------
   const active = () => doc.escenas.filter((s) => s.activa !== false);
-  const KIND = { words: { dur: 0.75, st: 0.055 }, letters: { dur: 0.7, st: 0.04 }, pop: { dur: 0.9 } };
+  const MOV = window.MOTION.MOVIMIENTOS, COREO = window.MOTION.COREOGRAFIAS, azar = window.MOTION.azar;
   // Curvas de entrada que puede elegir el estilo (motion.entrada)
   const CURVAS = {
     expo: exOut,
@@ -112,7 +113,11 @@
   let EASE = exOut;
   const DIRS = { derecha: [1, 0], izquierda: [-1, 0], abajo: [0, 1], arriba: [0, -1], zoom: [0, 0] };
   const AUTO = ['derecha', 'abajo', 'derecha', 'zoom', 'derecha', 'arriba'];
-  let S = [], TR = [], KEYS = [], PAIRS = [], TOTAL = 0;
+  // Transiciones entre escenas: el estilo pone la de siempre y cada escena puede pedir la suya
+  //   franjas · camara (la cámara viaja) · morph (solo se transforma lo compartido) · fundido · corte (seco)
+  const TRANS = ['franjas', 'camara', 'morph', 'fundido', 'corte'];
+  const CAMARA = (tr) => tr && (tr.tipo === 'franjas' || tr.tipo === 'camara');
+  let S = [], TR = [], KEYS = [], PAIRS = [], TOTAL = 0, PARTITURA = [];
 
   // Parte el texto en palabras (o letras), cada una con su máscara, sin tocar el marcado
   function splitText(el, letters) {
@@ -148,11 +153,77 @@
     el._parts = parts;
   }
 
+  // ---------- Qué movimiento lleva cada elemento ----------
+  // Rol: lo declara el tipo con data-r, o se deduce de la clave compartida y del campo
+  const TEXTOS = ['cuerpo', 'texto', 'subtitulo', 'nota', 'final'];
+  function rolDe(e) {
+    if (e.dataset.r) return e.dataset.r;
+    const k = e.dataset.k || '', f = e.dataset.f || '';
+    if (k === 'kicker' || k === 'titulo' || k === 'hero') return k;
+    if (k.startsWith('item-')) return 'item';
+    if (f === 'logo') return 'logo';
+    if (e.classList.contains('numeral')) return 'numeral';
+    if (e.dataset.m === 'count' || f === 'numero') return 'dato';
+    if (TEXTOS.includes(f)) return 'texto';
+    return 'otro';
+  }
+  // Coreografía de una escena: la que pide, la del estilo, o (si se repite el tipo de la
+  // anterior sin que nadie haya elegido nada) la siguiente de la rotación, para no repetir
+  function coreoDe(lista, i) {
+    const d = lista[i], E = doc.estilo;
+    if (d.coreografia && COREO[d.coreografia]) return d.coreografia;
+    const base = COREO[E.coreografia] ? E.coreografia : 'tipo';
+    // Una escena libre ya es a medida: no se rota
+    if (E.variar === false || d.tipo === 'libre') return base;
+    let run = 0;
+    for (let j = i - 1; j >= 0 && lista[j].tipo === d.tipo; j--) run++;
+    const rot = (E.coreografias || [base, 'editorial', 'cinetica', 'sobria']).filter((c) => COREO[c]);
+    return rot.length ? rot[run % rot.length] : base;
+  }
+  // El movimiento se adapta al contenido: letras solo en textos cortos, palabras en lo que se lee
+  // de un vistazo, renglones en los párrafos
+  function adaptar(e, kind, avisos) {
+    const n = (e.textContent || '').trim().length, words = (e.textContent || '').trim().split(/\s+/).length;
+    let k = kind;
+    if (MOV[k]?.partes === 'letras' && n > 28) k = words > 14 ? 'renglones' : 'words';
+    else if (MOV[k]?.partes === 'palabras' && words > 24) k = 'renglones';
+    if (k !== kind) avisos.push(`«${plain(e.textContent).trim().slice(0, 30)}…»: ${kind} → ${k} (texto largo)`);
+    return k;
+  }
+  function resolverMov(el, d, coreo, avisos) {
+    const mov = d.mov || {}, roles = COREO[coreo]?.roles || {}, idx = {};
+    el.querySelectorAll('[data-m], [data-r], [data-f]').forEach((e) => {
+      const f = e.dataset.f, i = f ? (idx[f] = (idx[f] ?? -1) + 1) : 0, rol = rolDe(e);
+      // En la escena: por campo ("titulo", "puntos.2") o por rol ("@item"); si no, la coreografía
+      let o = (f && (mov[`${f}.${i}`] ?? mov[f])) ?? mov['@' + rol];
+      if (o === undefined && (e.dataset.m || e.dataset.r)) o = roles[rol];
+      if (o === undefined) return;
+      if (typeof o === 'string') o = { m: o };
+      const set = (k, v) => { if (v !== undefined && v !== '' && v !== null) e.dataset[k] = v; };
+      set('m', o.m); set('at', o.at); set('dur', o.dur); set('stagger', o.stagger); set('s', o.s); set('orden', o.orden);
+      set('e', o.e); set('es', o.es); set('eat', o.eat); set('edur', o.edur); set('x', o.x);
+      if (o.m && !MOV[o.m]) avisos.push(`movimiento desconocido: ${o.m}`);
+    });
+  }
+  // Orden de las partes de un texto (o de los ítems de un grupo)
+  function rangos(n, orden) {
+    const mid = (n - 1) / 2, ix = [...Array(n).keys()];
+    if (orden === 'inverso') return ix.map((j) => n - 1 - j);
+    if (orden === 'centro') return ix.map((j) => Math.round(Math.abs(j - mid)));
+    if (orden === 'bordes') return ix.map((j) => Math.round(mid - Math.abs(j - mid)));
+    if (orden === 'azar') { const o = ix.slice().sort((a, b) => azar(a, n) - azar(b, n)); return ix.map((j) => o.indexOf(j)); }
+    return ix;
+  }
+  // Los textos que se reescriben (type, desordenar) actúan sobre el texto, no sobre su decoración
+  const blancoDeTexto = (e) => (e.children.length && ![...e.children].every((c) => c.matches('span.accent, em, b, strong, br')) ? e.querySelector('[data-texto]') || e.lastElementChild : e);
+
   function build() {
     const box = $('layers'), E = doc.estilo, R = +E.ritmo || 1;
-    D = cl(+E.duracion || 1.5, 0.3, 4); SPAN = 900 * (E.recorrido ?? 1); EASE = CURVAS[E.entrada] || exOut;
+    const DG = cl(+E.duracion || 1.5, 0.3, 4); SPAN = 900 * (E.recorrido ?? 1); EASE = CURVAS[E.entrada] || exOut;
     box.innerHTML = ''; $('ghosts').innerHTML = '';
-    S = active().map((d, i) => {
+    const lista = active();
+    PARTITURA = [];
+    S = lista.map((d, i) => {
       const tipo = TIPOS[d.tipo], el = document.createElement('section');
       el.className = 'scene scene-' + d.tipo;
       try { el.innerHTML = tipo ? tipo.render(d, { logo: (size) => logoHTML(size, d.logo), n: i + 1 }) : `<div class="pad"><h2>Tipo desconocido: ${esc(d.tipo)}</h2></div>`; }
@@ -161,37 +232,78 @@
       // Elementos ocultos desde el editor
       (d.ocultar || []).forEach((f) => el.querySelectorAll(`[data-f="${f}"]`).forEach((x) => x.remove()));
       box.appendChild(el);
-      el.querySelectorAll('[data-m="words"], [data-m="letters"]').forEach((e) => splitText(e, e.dataset.m === 'letters'));
-      const anims = [...el.querySelectorAll('[data-m]')].map((e, order) => {
-        const kind = e.dataset.m, k = KIND[kind] || {};
-        return { e, kind, order, s: +e.dataset.s || 0, at: (+e.dataset.at || 0) * R, dur: +(e.dataset.dur || k.dur || 0.9) * R, st: +(e.dataset.stagger || k.st || 0) * R,
-          par: +(e.dataset.par || 1), dim: e.hasAttribute('data-dim'), out: e.dataset.out ? +e.dataset.out : null, parts: e._parts || null };
+      const avisos = [], coreo = coreoDe(lista, i);
+      resolverMov(el, d, coreo, avisos);
+      el.querySelectorAll('[data-m]').forEach((e) => {
+        if (!MOV[e.dataset.m]) { avisos.push(`movimiento desconocido: ${e.dataset.m}`); e.dataset.m = 'fade'; }
+        e.dataset.m = adaptar(e, e.dataset.m, avisos);
+        const def = MOV[e.dataset.m];
+        if (!def.partes) return;
+        splitText(e, def.partes === 'letras');
+        // Renglones: las palabras que comparten altura forman una unidad
+        if (def.partes === 'renglones') {
+          const tops = e._parts.map((w) => Math.round(w.parentElement.offsetTop / 4));
+          const u = [...new Set(tops)].sort((a, b) => a - b);
+          e._unit = tops.map((t) => u.indexOf(t)); e._units = u.length;
+        } else { e._unit = e._parts.map((_, j) => j); e._units = e._parts.length; }
       });
-      const steps = 1 + Math.max(0, ...anims.map((a) => a.s));
-      const intro = Array.from({ length: steps }, (_, s) => anims.filter((a) => a.s === s)
-        .reduce((m, a) => Math.max(m, a.at + a.dur + (a.parts ? Math.max(0, a.parts.length - 1) * a.st : 0)), 0.6));
+      const anims = [...el.querySelectorAll('[data-m], [data-e]')].map((e, order) => {
+        const kind = e.dataset.m || 'quieto', def = MOV[kind], ds = e.dataset;
+        const a = { e, kind, def, order, s: +ds.s || 0, at: (+ds.at || 0) * R, dur: +(ds.dur || def.dur || 0.9) * R, st: +(ds.stagger || def.st || 0) * R,
+          par: +(ds.par || 1), dim: e.hasAttribute('data-dim'), out: ds.out ? +ds.out : null, parts: e._parts || null,
+          x: MOV[ds.x] ? ds.x : null, txt: def.texto || kind === 'type' || kind === 'desordenar' ? blancoDeTexto(e) : e };
+        if (a.parts) { a.unit = e._unit; a.rank = rangos(e._units, ds.orden || def.orden); a.maxRank = Math.max(0, ...a.rank); }
+        if (ds.e && MOV[ds.e]) { const ad = MOV[ds.e]; a.acc = { def: ad, s: ds.es !== undefined ? +ds.es : a.s, at: ds.eat !== undefined ? +ds.eat * R : ds.es !== undefined ? 0.1 * R : a.at + a.dur, dur: +(ds.edur || ad.dur || 0.7) * R }; }
+        else if (ds.e) avisos.push(`acento desconocido: ${ds.e}`);
+        return a;
+      });
+      // Ítems de un mismo grupo (rol y punto clave) en el orden pedido: se reparten sus tiempos
+      const grupos = {};
+      anims.forEach((a) => { if (a.e.dataset.orden && !a.parts) (grupos[`${rolDe(a.e)}.${a.s}`] ??= []).push(a); });
+      Object.values(grupos).forEach((g) => { const ts = g.map((a) => a.at).sort((x, y) => x - y), rk = rangos(g.length, g[0].e.dataset.orden); g.forEach((a, j) => { a.at = ts[rk[j]]; }); });
+      const steps = 1 + Math.max(0, ...anims.map((a) => Math.max(a.s, a.acc ? a.acc.s : 0)));
+      const fin = (a) => a.at + a.dur + (a.parts ? a.maxRank * a.st : 0);
+      const intro = Array.from({ length: steps }, (_, s) => anims.reduce((m, a) => Math.max(m, a.s === s ? fin(a) : 0, a.acc && a.acc.s === s && a.acc.def.fase === 'acento' ? a.acc.at + a.acc.dur : 0), 0.6));
       const dir = DIRS[d.entrada] ? d.entrada : AUTO[(i + AUTO.length - 1) % AUTO.length];
-      return { d, i, el, tipo, anims, steps, intro, dir, foci: tipo?.focos?.(d) || [], keyed: new Map(), sharedIn: new Set(), sharedOut: new Set() };
+      const trD = typeof d.transicion === 'object' && d.transicion ? d.transicion : { tipo: d.transicion };
+      const trans = { tipo: TRANS.includes(trD.tipo) ? trD.tipo : TRANS.includes(E.transicion) ? E.transicion : 'franjas' };
+      trans.D = trD.dur ? cl(+trD.dur, 0.05, 6) : trans.tipo === 'corte' ? 0.08 : trans.tipo === 'fundido' ? DG * 0.8 : DG;
+      return { d, i, el, tipo, anims, steps, intro, dir, trans, coreo, avisos, foci: Array.isArray(d.focos) ? d.focos : tipo?.focos?.(d) || [], keyed: new Map(), sharedIn: new Set(), sharedOut: new Set() };
     });
     // Línea de tiempo: [transición] → punto clave → punto clave… → transición → …
     TR = []; KEYS = [];
     let cur = 0;
     S.forEach((sc, i) => {
       let base = 0;
-      if (i > 0) { TR.push({ a: i - 1, b: i, start: cur }); base = cur + D * 0.35; }
+      const tr = i > 0 ? { a: i - 1, b: i, start: cur, tipo: sc.trans.tipo, D: sc.trans.D } : null;
+      if (tr) { TR.push(tr); base = cur + tr.D * (tr.tipo === 'corte' ? 1 : tr.tipo === 'fundido' ? 0.2 : 0.35); }
       sc.tIn = i > 0 ? cur : 0;
       sc.stepStart = []; sc.keyT = [];
       for (let s = 0; s < sc.steps; s++) {
-        const intro = s === 0 && i > 0 ? Math.max(sc.intro[0], D * 0.65 + 0.2) : sc.intro[s];
+        const intro = s === 0 && tr && tr.tipo !== 'corte' ? Math.max(sc.intro[0], tr.D * 0.65 + 0.2) : sc.intro[s];
         sc.stepStart[s] = base; base += intro; sc.keyT[s] = base;
         KEYS.push({ t: base, i, s });
       }
       cur = base;
     });
-    S.forEach((sc, i) => { sc.tOut = i < S.length - 1 ? TR[i].start + D : Infinity; });
+    S.forEach((sc, i) => { sc.tOut = i < S.length - 1 ? TR[i].start + TR[i].D : Infinity; });
     TOTAL = cur;
     worldPos.length = 0;
     measure();
+    // Partitura: qué se mueve en cada escena, para revisar el ritmo del conjunto (lo que viaja
+    // desde la escena anterior no entra: se transforma)
+    PARTITURA = S.map((sc, i) => {
+      const movs = {}, cuenta = {};
+      sc.anims.forEach((a) => {
+        const r = rolDe(a.e), k = sc.sharedIn.has(a.e) ? 'viaja' : a.kind;
+        (movs[r] ??= new Set()).add(k + (a.acc ? '+' + a.acc.def.id : ''));
+        cuenta[k] = (cuenta[k] || 0) + 1;
+      });
+      const roles = Object.fromEntries(Object.entries(movs).map(([r, v]) => [r, [...v]]));
+      return { escena: i + 1, tipo: sc.d.tipo, coreografia: sc.coreo, transicion: i ? sc.trans.tipo : null, camara: i && CAMARA(sc.trans) ? sc.dir : null, pasos: sc.steps,
+        roles, firma: Object.entries(roles).map(([r, v]) => `${r}:${v.join('/')}`).sort().join(' '), cuenta, elementos: sc.anims.length, avisos: sc.avisos };
+    });
+    window.PARTITURA = PARTITURA;
     buildPlan();
     if (!RENDER) buildTimeline();
     $('dots').innerHTML = S.map(() => '<i></i>').join('');
@@ -222,8 +334,8 @@
       const A = S[tr.a], B = S[tr.b], out = [];
       B.keyed.forEach((b, key) => {
         const a = A.keyed.get(key);
-        // Solo viaja lo que está a la vista en los dos extremos de la transición
-        if (!a || b.s !== 0 || (a.shape === 'text') !== (b.shape === 'text')) return;
+        // Solo viaja lo que está a la vista en los dos extremos de la transición (en un corte, nada)
+        if (tr.tipo === 'corte' || !a || b.s !== 0 || (a.shape === 'text') !== (b.shape === 'text')) return;
         out.push({ a, b, text: a.shape === 'text' });
         A.sharedOut.add(a.e); B.sharedIn.add(b.e);
       });
@@ -247,15 +359,14 @@
   // Movimiento entre escenas: la saliente se va en la dirección de la entrante
   function camOf(sc, T) {
     let s = 1, tx = 0, ty = 0;
-    if (doc.estilo.transicion === 'morph') return { s, tx, ty };
     const tin = sc.i > 0 ? TR[sc.i - 1] : null, tout = TR[sc.i];
-    if (tin && T < tin.start + D) {
-      const e = exInOut(cl((T - tin.start) / D));
+    if (CAMARA(tin) && T < tin.start + tin.D) {
+      const e = exInOut(cl((T - tin.start) / tin.D));
       if (sc.dir === 'zoom') s = lerp(0.72, 1, e);
       else { const [dx, dy] = DIRS[sc.dir]; tx = dx * SPAN * (1 - e); ty = dy * SPAN * 0.6 * (1 - e); }
     }
-    if (tout && T > tout.start) {
-      const e = exInOut(cl((T - tout.start) / D)), dn = S[sc.i + 1].dir;
+    if (CAMARA(tout) && T > tout.start) {
+      const e = exInOut(cl((T - tout.start) / tout.D)), dn = S[sc.i + 1].dir;
       if (dn === 'zoom') s *= lerp(1, 1.5, e);
       else { const [dx, dy] = DIRS[dn]; tx -= dx * SPAN * e; ty -= dy * SPAN * 0.6 * e; }
     }
@@ -282,57 +393,83 @@
 
   // ---------- Estado de un elemento según el tiempo ----------
   // t: segundos desde que empezó su entrada · x: progreso de su salida (0 → 1)
+  const base = () => ({ op: 1, tr: '', clip: '', filter: '', origin: '', bg: null });
+  // Progreso 0 → 1, con un margen para que el punto clave (t === dur, con redondeo) cuente como llegado
+  const prog = (t, dur) => cl(t / dur + 1e-6);
+  const unir = (r, o) => {
+    r.op *= o.op; if (o.tr) r.tr = r.tr ? `${r.tr} ${o.tr}` : o.tr;
+    if (o.clip) r.clip = o.clip; if (o.filter) r.filter = r.filter ? `${r.filter} ${o.filter}` : o.filter;
+    if (o.origin && !r.origin) r.origin = o.origin; if (o.bg) r.bg = o.bg;
+  };
+  const escribir = (e, r) => {
+    e.style.opacity = r.op; e.style.transform = r.tr; e.style.clipPath = r.clip; e.style.filter = r.filter; e.style.transformOrigin = r.origin;
+  };
   function apply(a, t, x, sc, od) {
-    const e = a.e, p = cl(t / a.dur), Pp = EASE(p), dz = doc.estilo.distancia ?? 1;
-    let op = 1, tr = '', clip = '';
-    switch (a.kind) {
-      case 'fade': op = cl(Pp); break;
-      case 'up': op = cl(Pp); tr = `translateY(${(1 - Pp) * 50 * dz}px)`; break;
-      case 'left': op = cl(Pp); tr = `translateX(${(1 - Pp) * -70 * dz}px)`; break;
-      case 'right': op = cl(Pp); tr = `translateX(${(1 - Pp) * 70 * dz}px)`; break;
-      case 'zoom': op = cl(Pp); tr = `scale(${0.9 + 0.1 * Pp})`; break;
-      case 'pop': op = cl(p * 2.5); tr = `scale(${0.55 + 0.45 * backOut(p)})`; break;
-      case 'wipe': clip = `inset(-10% ${(1 - Pp) * 100}% -10% ${exOut(x) * 100}%)`; break;
-      case 'reveal': {
-        clip = `inset(${exOut(x) * 100}% 0 ${(1 - Pp) * 100}% 0)`;
-        const img = e.querySelector('img');
-        if (img) img.style.transform = `scale(${1.18 - 0.18 * exOut(cl(t / (a.dur * 1.6)))})`;
-        break;
-      }
-      case 'draw': {
-        const len = e._len || (e._len = e.getTotalLength());
-        e.style.strokeDasharray = len; e.style.strokeDashoffset = len * (1 - Pp); e._p = p;
-        op = 1 - exOut(x); break;
-      }
-      case 'count': e.textContent = Math.round((parseFloat(e.dataset.to) || 0) * Pp); break;
-      case 'type': e._full ??= e.textContent; e.textContent = e._full.slice(0, Math.round(e._full.length * p)); break;
-      case 'words': case 'letters': {
-        const n = a.parts.length;
-        a.parts.forEach((w, j) => {
-          const pj = EASE(cl((t - j * a.st) / a.dur)), xj = exOut(cl((x - (j / n) * 0.5) / 0.5));
-          w.style.transform = `translateY(${(1 - pj - xj) * 110}%)`;
-        });
-        break;
+    const e = a.e, def = a.def, dz = doc.estilo.distancia ?? 1;
+    const c = { el: a.txt, t, dur: a.dur, d: e.dataset, dz, amb, j: 0, n: 1, p: prog(t, a.dur) };
+    c.e = EASE(c.p);
+    let r = base();
+    // Salida propia (data-x): ese movimiento al revés, sobre el elemento entero
+    const salidaX = (rr) => { if (!a.x || x <= 0) return false; const o = base(), q = 1 - exOut(x); MOV[a.x].aplicar({ ...c, el: e, p: q, e: EASE(q), t: a.dur * q }, o); unir(rr, o); return true; };
+    if (a.parts) {
+      const nU = a.maxRank + 1;
+      a.parts.forEach((w, j) => {
+        const u = a.unit[j], rk = a.rank[u], tj = t - rk * a.st, pj = prog(tj, a.dur), rw = base();
+        const cj = { ...c, el: w, t: tj, p: pj, e: EASE(pj), j: u, n: a.unit.length ? Math.max(...a.unit) + 1 : 1 };
+        def.aplicar(cj, rw);
+        if (x > 0 && !a.x) {
+          const xj = exOut(cl((x - (rk / nU) * 0.5) / 0.5));
+          if (def.salir) def.salir({ ...cj, x: xj }, rw);
+          else { const q = 1 - xj, o = base(); def.aplicar({ ...cj, p: q, e: EASE(q) }, o); Object.assign(rw, o); }
+        }
+        escribir(w, rw);
+      });
+      salidaX(r);
+    } else {
+      def.aplicar(c, r);
+      if (x > 0 && !salidaX(r)) {
+        if (def.salir) def.salir({ ...c, x }, r);
+        else { const xe = exOut(x); r.op *= 1 - xe; r.tr = `translate(${-od[0] * 90 * xe}px, ${-od[1] * 90 * xe}px) ` + r.tr; }
       }
     }
-    // Salida: lo que no viaja se va hacia donde se mueve la cámara
-    if (x > 0 && !['wipe', 'reveal', 'words', 'letters', 'draw'].includes(a.kind)) {
-      const xe = exOut(x); op *= 1 - xe; tr = `translate(${-od[0] * 90 * xe}px, ${-od[1] * 90 * xe}px) ` + tr;
+    // Acento (data-e): algo que le pasa a un elemento ya visible, o un bucle mientras se ve
+    if (a.acc && sc.stepStart[a.acc.s] !== undefined) {
+      const A = a.acc, ta = T_ - sc.stepStart[A.s] - A.at, pa = prog(ta, A.dur), o = base();
+      if (A.def.fase !== 'bucle' || ta > 0) A.def.aplicar({ ...c, el: e, t: ta, p: pa, e: EASE(pa), dur: A.dur }, o);
+      if (o.bg) {
+        // Sobre las *palabras* en acento, si las hay; si no, sobre el elemento
+        e._accT ??= (() => {
+          const acc = [...e.querySelectorAll('.accent')];
+          if (acc.length) return acc;
+          if (getComputedStyle(e).display === 'inline') return [e];
+          // Un bloque: el fondo va en un span que abraza solo el texto, renglón por renglón
+          const w = document.createElement('span'); w.className = 'acc-t';
+          while (e.firstChild) w.appendChild(e.firstChild);
+          e.appendChild(w); return [w];
+        })();
+        const ts = e._accT;
+        ts.forEach((el) => Object.assign(el.style, { backgroundImage: o.bg.image, backgroundSize: o.bg.size, backgroundPosition: o.bg.pos, backgroundRepeat: 'no-repeat', boxDecorationBreak: 'clone', webkitBoxDecorationBreak: 'clone' }));
+        o.bg = null;
+      }
+      unir(r, o);
     }
-    if (a.dim && sc.stepStart[a.s + 1] !== undefined) op *= 1 - 0.55 * exOut(cl((T_ - sc.stepStart[a.s + 1]) / 0.5));
+    if (a.dim && sc.stepStart[a.s + 1] !== undefined) r.op *= 1 - 0.55 * exOut(cl((T_ - sc.stepStart[a.s + 1]) / 0.5));
     // data-out: se va del todo al empezar ese punto clave (para destacar una cosa por vez)
-    if (a.out !== null && sc.stepStart[a.out] !== undefined) op *= 1 - exOut(cl((T_ - sc.stepStart[a.out]) / 0.4));
-    if (a.par !== 1) tr = `translate(${(sc.L.cam.tx * (a.par - 1)) / sc.L.s}px, ${(sc.L.cam.ty * (a.par - 1)) / sc.L.s}px) ` + tr;
-    e.style.opacity = op; e.style.transform = tr; e.style.clipPath = clip; e.style.transformOrigin = '';
+    if (a.out !== null && sc.stepStart[a.out] !== undefined) r.op *= 1 - exOut(cl((T_ - sc.stepStart[a.out]) / 0.4));
+    if (a.par !== 1) r.tr = `translate(${(sc.L.cam.tx * (a.par - 1)) / sc.L.s}px, ${(sc.L.cam.ty * (a.par - 1)) / sc.L.s}px) ` + r.tr;
+    escribir(e, r);
   }
 
   // ---------- Un cuadro ----------
+  const trAt = (T) => TR.findIndex((tr) => T > tr.start && T < tr.start + tr.D);
   let T_ = 0, morphing = new Set();
   function render(T, vel = 0) {
     T_ = T;
-    const ti = TR.findIndex((tr) => T > tr.start && T < tr.start + D);
+    const ti = trAt(T);
     S.forEach((sc) => {
-      const vis = (sc.i === 0 ? T >= 0 : T > sc.tIn) && T < sc.tOut;
+      const tin = sc.i > 0 ? TR[sc.i - 1] : null, tout = TR[sc.i];
+      // En un corte, la escena nueva aparece recién cuando termina
+      const vis = (sc.i === 0 ? T >= 0 : T > sc.tIn + (tin.tipo === 'corte' ? tin.D : 0)) && T < sc.tOut;
       sc.vis = vis;
       sc.el.style.visibility = vis ? 'visible' : 'hidden';
       if (!vis) return;
@@ -340,14 +477,16 @@
       sc.el.style.transform = `translate(${sc.L.tx}px, ${sc.L.ty}px) scale(${sc.L.s})`;
       if (vel) { const c0 = camOf(sc, T - 0.01 * Math.sign(vel)); sc.el.style.filter = blurOf((sc.L.cam.tx - c0.tx) * 100 * Math.abs(vel), (sc.L.cam.ty - c0.ty) * 100 * Math.abs(vel)); }
       else sc.el.style.filter = '';
-      const tin = sc.i > 0 ? TR[sc.i - 1] : null, tout = TR[sc.i];
-      const qIn = tin ? cl((T - tin.start) / D) : 1, qOut = tout ? cl((T - tout.start) / D) : 0;
+      const qIn = tin ? cl((T - tin.start) / tin.D) : 1, qOut = tout ? cl((T - tout.start) / tout.D) : 0;
       const od = tout ? DIRS[S[sc.i + 1].dir] : [0, 0];
+      // Fundido: las capas se cruzan enteras; en el fundido y en el corte, nada sale por su cuenta
+      sc.el.style.opacity = (tin?.tipo === 'fundido' ? smooth(0, 1, qIn) : 1) * (tout?.tipo === 'fundido' ? 1 - smooth(0, 1, qOut) : 1);
+      const sale = tout && tout.tipo !== 'corte' && tout.tipo !== 'fundido';
       sc.anims.forEach((a) => {
         if (qIn < 1 && sc.sharedIn.has(a.e)) return;
         if (qOut > 0 && sc.sharedOut.has(a.e)) return;
         const t = sc.sharedIn.has(a.e) ? 1e9 : T - sc.stepStart[a.s] - a.at;
-        apply(a, t, qOut > 0 ? cl((qOut - a.order * 0.022) / 0.42) : 0, sc, od);
+        apply(a, t, sale && qOut > 0 ? cl((qOut - a.order * 0.022) / 0.42) : 0, sc, od);
       });
     });
 
@@ -355,8 +494,8 @@
     const now = new Set(), gbox = $('ghosts');
     let gi = 0;
     if (ti >= 0) {
-      const tr = TR[ti], A = S[tr.a], B = S[tr.b], qq = (T - tr.start) / D, m = exInOut(cl((qq - 0.04) / 0.9));
-      const La = layerAt(A, tr.start), Lb = layerAt(B, tr.start + D);
+      const tr = TR[ti], A = S[tr.a], B = S[tr.b], qq = (T - tr.start) / tr.D, m = exInOut(cl((qq - 0.04) / 0.9));
+      const La = layerAt(A, tr.start), Lb = layerAt(B, tr.start + tr.D);
       PAIRS[ti].forEach(({ a, b, text }) => {
         const sa = toScreen(La, a), sb = toScreen(Lb, b), x = lerp(sa.x, sb.x, m), y = lerp(sa.y, sb.y, m);
         if (text) {
@@ -401,12 +540,12 @@
   };
   function wipes(T, ti, vel) {
     const box = $('wipes');
-    if (ti < 0 || doc.estilo.transicion !== 'franjas') { box.style.display = 'none'; return; }
+    if (ti < 0 || TR[ti].tipo !== 'franjas') { box.style.display = 'none'; return; }
     box.style.display = '';
     const F = doc.estilo.franjas || {}, n = cl(Math.round(F.n || 4), 1, 8), g = F.grosor || 1, mid = (n - 1) / 2, col = COLOR_FRANJA[F.color] || COLOR_FRANJA.mixto;
     while (box.children.length < n) box.appendChild(document.createElement('i'));
     while (box.children.length > n) box.lastChild.remove();
-    const tr = TR[ti], qq = (T - tr.start) / D, dn = S[tr.b].dir, [dx, dy] = DIRS[dn];
+    const tr = TR[ti], D = tr.D, qq = (T - tr.start) / D, dn = S[tr.b].dir, [dx, dy] = DIRS[dn];
     const at = (q2, j) => {
       const e = exInOut(cl((q2 - j * (0.18 / n)) / 0.82)), open = Math.pow(Math.sin(Math.PI * e), 2);
       return { e, thick: (26 + 230 * open) * g * (4 / n) ** 0.5, gap: (j - mid) * (30 + 260 * open) * (4 / n) ** 0.5 };
@@ -434,7 +573,7 @@
   function chrome(T, ti) {
     const ci = sceneAt(T), hidden = (sc) => (sc.d.tipo === 'portada' || sc.d.cromo === false || !doc.estilo.cromo ? 1 : 0);
     let f = ci, m = 0;
-    if (ti >= 0) { m = exInOut(cl((T - TR[ti].start) / D)); f = ti + m; }
+    if (ti >= 0) { m = exInOut(cl((T - TR[ti].start) / TR[ti].D)); f = ti + m; }
     const vis = ti >= 0 ? lerp(1 - hidden(S[ti]), 1 - hidden(S[ti + 1]), m) : 1 - hidden(S[ci]);
     $('chromeTop').style.opacity = $('chromeBottom').style.opacity = vis;
     const bv = S[Math.round(f)]?.d.logo || '';
@@ -449,11 +588,11 @@
   // La trama de fondo avanza con la cámara, más lenta: queda "lejos"
   const worldPos = [];
   function world(T) {
-    if (worldPos.length !== S.length) { worldPos.length = 0; let x = 0, y = 0; S.forEach((sc, i) => { if (i) { const [dx, dy] = DIRS[sc.dir]; x += dx * SPAN; y += dy * SPAN * 0.6; } worldPos.push([x, y]); }); }
-    const ti = TR.findIndex((tr) => T > tr.start && T < tr.start + D);
+    if (worldPos.length !== S.length) { worldPos.length = 0; let x = 0, y = 0; S.forEach((sc, i) => { if (i && CAMARA(TR[i - 1])) { const [dx, dy] = DIRS[sc.dir]; x += dx * SPAN; y += dy * SPAN * 0.6; } worldPos.push([x, y]); }); }
+    const ti = trAt(T);
     let [x, y] = worldPos[sceneAt(T)] || [0, 0];
-    if (ti >= 0 && doc.estilo.transicion !== 'morph') {
-      const e = exInOut(cl((T - TR[ti].start) / D)), a = worldPos[ti], b = worldPos[ti + 1];
+    if (ti >= 0 && CAMARA(TR[ti])) {
+      const e = exInOut(cl((T - TR[ti].start) / TR[ti].D)), a = worldPos[ti], b = worldPos[ti + 1];
       x = lerp(a[0], b[0], e); y = lerp(a[1], b[1], e);
     }
     $('world').style.backgroundPosition = `${-x * 0.3}px ${-y * 0.3}px`;
@@ -725,13 +864,16 @@
   const EXTRA = [
     ['logo', 'logo', 'Logo de esta escena'],
     ['pasos', 'select', 'Puntos clave', { '': 'Según el tipo de escena', uno: 'Uno por punto (cada avance suma uno)', todo: 'Todo junto' }],
-    ['entrada', 'select', 'Cómo llega la cámara', { '': 'Automático', derecha: 'Desde la derecha', izquierda: 'Desde la izquierda', abajo: 'Desde abajo', arriba: 'Desde arriba', zoom: 'Zoom hacia adentro' }],
+    ['coreografia', 'select', 'Coreografía (cómo se mueve cada rol)', () => ({ '': 'Automática (la del estilo; varía si se repite el tipo)', ...Object.fromEntries(Object.values(COREO).map((c) => [c.id, c.nombre + (c.usar ? ' — ' + c.usar : '')])) })],
+    ['transicion', 'select', 'Cómo llega esta escena', { '': 'La del estilo', franjas: 'Franjas que barren + cámara', camara: 'La cámara viaja', morph: 'Solo se transforma lo compartido', fundido: 'Fundido', corte: 'Corte seco' }],
+    ['entrada', 'select', 'Hacia dónde viaja la cámara', { '': 'Automático', derecha: 'Desde la derecha', izquierda: 'Desde la izquierda', abajo: 'Desde abajo', arriba: 'Desde arriba', zoom: 'Zoom hacia adentro' }],
     ['mantener', 'number', 'Pausa en automático y en el video (segundos)'],
     ['notas', 'area', 'Notas del presentador'],
   ];
   const logoOptions = () => [...Object.entries(logoNombres()), ...MANIFIESTO.logos.map((p) => ['archivo:' + p, 'Archivo: ' + p.split('/').pop()]),
     ...userAssets.filter((a) => a.tipo === 'image').map((a) => ['archivo:' + a.url, 'Importado: ' + a.nombre])];
-  const campoDe = (d, f) => [...(TIPOS[d.tipo]?.campos || []), ...EXTRA].find(([k]) => k === f) || [f, 'area', f];
+  const camposDe = (d) => TIPOS[d.tipo]?.camposDe?.(d) || TIPOS[d.tipo]?.campos || [];
+  const campoDe = (d, f) => [...camposDe(d), ...EXTRA].find(([k]) => k === f) || [f, 'area', f];
 
   // Un campo ligado a s[key]: al cambiar, guarda y reconstruye manteniendo el punto clave
   let formTimer;
@@ -740,7 +882,7 @@
     f.className = 'field';
     f.innerHTML = `<span>${esc(label)}${extraLabel}</span>`;
     let input;
-    const val = Array.isArray(s[key]) ? s[key].join('\n') : (s[key] ?? '');
+    const val = Array.isArray(s[key]) ? s[key].join('\n') : s[key] && typeof s[key] === 'object' ? s[key].tipo ?? '' : (s[key] ?? '');
     const select = (opts) => { input = document.createElement('select'); opts.forEach(([v, n]) => input.add(new Option(n, v))); input.value = val; };
     if (type === 'image' || type === 'video') {
       const opts = type === 'image' ? [...MANIFIESTO.imagenes] : [...MANIFIESTO.videos];
@@ -748,7 +890,7 @@
       if (val && !opts.includes(val) && !own.includes(val)) opts.unshift(val);
       select([['', '— ninguna —'], ...opts.map((o) => [o, o.split('/').pop()]), ...own.map((o) => [o, 'Archivo importado'])]);
     } else if (type === 'logo') select([['', 'Igual que la presentación'], ...logoOptions()]);
-    else if (type === 'select') select(Object.entries(opt));
+    else if (type === 'select') select(Object.entries(typeof opt === 'function' ? opt() : opt));
     else if (type === 'area' || type === 'lines' || type === 'pairs') {
       input = document.createElement('textarea');
       input.value = val;
@@ -760,7 +902,7 @@
     }
     input.addEventListener('input', () => {
       s[key] = type === 'number' ? parseFloat(input.value) || 0 : input.value;
-      if ((type === 'logo' || key === 'pasos' || key === 'entrada') && !input.value) delete s[key];
+      if ((type === 'logo' || ['pasos', 'entrada', 'coreografia', 'transicion'].includes(key)) && !input.value) delete s[key];
       save();
       if (key === 'notas') { notesFor = ''; return; }
       if (key === 'mantener') return;
@@ -777,7 +919,7 @@
     if (!s) { box.innerHTML = '<p class="hint">No hay escenas activas.</p>'; return; }
     box.innerHTML = `<h4>${esc(TIPOS[s.tipo]?.nombre || s.tipo)} · escena ${sc.i + 1}</h4><p class="hint">También podés hacer clic directo sobre un elemento del escenario para editar solo ese.</p>`;
     const extra = EXTRA.filter(([k]) => (k !== 'pasos' || TIPOS[s.tipo]?.pasos) && (k !== 'logo' || TIPOS[s.tipo]?.conLogo));
-    [...(TIPOS[s.tipo]?.campos || []), ...extra].forEach((c) => box.appendChild(makeField(s, c,
+    [...camposDe(s), ...extra].forEach((c) => box.appendChild(makeField(s, c,
       c[0] === 'pasos' ? ` (por defecto: ${TIPOS[s.tipo].pasos === 'uno' ? 'uno por punto' : 'todo junto'})` : '')));
     // Elementos ocultos: se vuelven a mostrar desde acá
     if (s.ocultar?.length) {
@@ -872,6 +1014,65 @@
     };
     tools.querySelector('[data-a=mark]').onclick = () => toggleMarking(true);
     box.appendChild(tools);
+    box.appendChild(movPanel(d, f));
+  }
+
+  // Movimiento del elemento elegido: se guarda en escena.mov[campo] (o campo.n, solo ese)
+  function movPanel(d, f) {
+    const wrap = document.createElement('div'), sc = S.find((x) => x.d === d);
+    const els = sc ? [...sc.el.querySelectorAll(`[data-f="${f}"]`)] : [], el = els[selF.i] || els[0];
+    const varios = els.length > 1, soloKey = `${f}.${Math.max(0, selF.i)}`;
+    let key = d.mov?.[soloKey] ? soloKey : f;
+    const fases = (ph) => Object.values(MOV).filter((m) => ph.includes(m.fase)).map((m) => [m.id, m.nombre + (m.usar ? ' — ' + m.usar : '')]);
+    const ahora = el?.dataset.m ? `${MOV[el.dataset.m]?.nombre || el.dataset.m}` : 'sin movimiento';
+    wrap.innerHTML = `<h4>Movimiento</h4><p class="hint">Ahora entra con: <b>${esc(ahora)}</b>${el?.dataset.e ? ` · acento: <b>${esc(MOV[el.dataset.e]?.nombre || el.dataset.e)}</b>` : ''}. Elegí el que cuente mejor lo que dice este elemento; al cambiarlo se reproduce.</p>${el && sc?.sharedIn.has(el) ? '<p class="hint">Este elemento <b>viaja desde la escena anterior</b> (se transforma en lugar de entrar): su entrada solo se ve si la anterior no lo tiene o si esta escena llega con un corte.</p>' : ''}`;
+    const o = () => { const v = d.mov?.[key]; return typeof v === 'string' ? { m: v } : { ...(v || {}) }; };
+    const pasoOpts = { '': 'El de siempre', ...Object.fromEntries(Array.from({ length: (sc?.steps || 1) + 1 }, (_, k) => [k, k ? `Punto clave ${k + 1} (en el avance ${k})` : 'Al llegar a la escena'])) };
+    const campos = [
+      ['m', 'Entrada', [['', 'La de la escena'], ...fases(['entrada'])]],
+      ['s', 'Cuándo entra', Object.entries(pasoOpts)],
+      ['at', 'Retardo (s)', 'num'], ['dur', 'Duración (s)', 'num'],
+      ['orden', 'Orden de las partes o del grupo', [['', 'El del movimiento'], ['normal', 'En orden'], ['inverso', 'Al revés'], ['centro', 'Desde el centro'], ['bordes', 'Desde los bordes'], ['azar', 'Al azar']]],
+      ['e', 'Acento (cuando ya se ve)', [['', 'Ninguno'], ...fases(['acento', 'bucle'])]],
+      ['es', 'Cuándo el acento', Object.entries(pasoOpts)],
+      ['x', 'Salida', [['', 'Automática (hacia donde va la cámara)'], ...fases(['entrada'])]],
+    ];
+    const guardar = (k, v) => {
+      const cur = o();
+      if (v === '' || v === undefined) delete cur[k]; else cur[k] = k === 'at' || k === 'dur' || k === 's' || k === 'es' ? +v : v;
+      d.mov = { ...(d.mov || {}) };
+      if (Object.keys(cur).length) d.mov[key] = cur; else delete d.mov[key];
+      if (!Object.keys(d.mov).length) delete d.mov;
+      save(); rebuild(); renderInspector();
+      const nsc = S.find((x) => x.d === d);
+      if (nsc) { const st = cl(+(cur.s ?? 0), 0, nsc.steps - 1); T = st ? nsc.stepStart[st] : nsc.tIn; target = nsc.keyT[Math.max(st, cur.es !== undefined ? cl(cur.es, 0, nsc.steps - 1) : st)]; }
+    };
+    if (varios) {
+      const l = document.createElement('label'); l.className = 'field check';
+      l.innerHTML = `<input type="checkbox" ${key === soloKey ? 'checked' : ''}><span>Solo este (si no, todos los «${esc(campoDe(d, f)[2])}»)</span>`;
+      l.querySelector('input').onchange = (e) => {
+        const v = d.mov?.[key]; d.mov = { ...(d.mov || {}) };
+        const nk = e.target.checked ? soloKey : f;
+        if (v !== undefined) { delete d.mov[key]; d.mov[nk] = v; }
+        key = nk; save(); rebuild(); renderInspector();
+      };
+      wrap.appendChild(l);
+    }
+    campos.forEach(([k, label, opts]) => {
+      const l = document.createElement('label'); l.className = 'field';
+      l.innerHTML = `<span>${esc(label)}</span>`;
+      let input;
+      if (opts === 'num') { input = document.createElement('input'); input.type = 'number'; input.step = '0.05'; input.min = '0'; input.value = o()[k] ?? ''; input.placeholder = 'el de siempre'; }
+      else { input = document.createElement('select'); opts.forEach(([v, n]) => input.add(new Option(n, v))); input.value = o()[k] ?? ''; }
+      input.addEventListener('change', () => guardar(k, input.value));
+      l.appendChild(input); wrap.appendChild(l);
+    });
+    const row = document.createElement('div'); row.className = 'row-btns';
+    row.innerHTML = '<button class="cbtn" data-a="ver">↺ Ver cómo entra</button><button class="cbtn" data-a="quitar">Volver al de la escena</button>';
+    row.querySelector('[data-a=ver]').onclick = () => { const st = +(el?.dataset.s || 0); T = st ? sc.stepStart[st] : sc.tIn; target = sc.keyT[Math.min(sc.steps - 1, Math.max(st, +(el?.dataset.es ?? st)))]; };
+    row.querySelector('[data-a=quitar]').onclick = () => { if (d.mov) { delete d.mov[key]; if (!Object.keys(d.mov).length) delete d.mov; } save(); rebuild(); renderInspector(); };
+    wrap.appendChild(row);
+    return wrap;
   }
 
   // ---------- Assets ----------
@@ -948,7 +1149,7 @@
   // Marcas de la escena actual, solo con la imagen quieta (las coordenadas son de ese cuadro)
   function renderPins() {
     if (!S.length) return;
-    const ci = sceneAt(T), sc = S[ci], st = stepAt(sc, T), show = showPins && !vel && !TR.some((tr) => T > tr.start && T < tr.start + D);
+    const ci = sceneAt(T), sc = S[ci], st = stepAt(sc, T), show = showPins && !vel && trAt(T) < 0;
     const key = `${ci}.${st}.${show}`;
     if (key === pinsKey) return;
     pinsKey = key;
@@ -1012,7 +1213,9 @@
     const fields = [
       ['tema', 'select', 'Tema', Object.fromEntries(Object.entries(P.temas).map(([k, t]) => [k, t.nombre || k]))],
       ['logo', 'select', 'Logo', logoOpts],
-      ['transicion', 'select', 'Entre escenas', { franjas: 'Franjas que barren + cámara', camara: 'Solo cámara', morph: 'Solo transformación (sin cámara)' }],
+      ['transicion', 'select', 'Entre escenas (cada escena puede pedir otra)', { franjas: 'Franjas que barren + cámara', camara: 'Solo cámara', morph: 'Solo transformación (sin cámara)', fundido: 'Fundido', corte: 'Corte seco' }],
+      ['coreografia', 'select', 'Coreografía base (cada escena puede pedir otra)', Object.fromEntries(Object.values(COREO).map((c) => [c.id, c.nombre]))],
+      ['variar', 'check', 'Variar la coreografía cuando se repite el tipo de escena'],
       ['velocidad', 'range', 'Velocidad de reproducción', [0.5, 2, 0.05]],
       ['desenfoque', 'check', 'Desenfoque de movimiento'],
       ['pie', 'text', 'Texto del pie'],

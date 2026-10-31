@@ -26,7 +26,11 @@ trae toma el valor por defecto del campo; los colores vacíos, los del tema.
 
 - **Tipos** (`reel/tipos.js`): `barras`, `palabras`, `dato`, `logo` (con bajada y
   cierre en la barra del primer cuadro, para que el loop no se note), `titulo`,
-  `imagen` (ken burns, de `MANIFIESTO.imagenes`) y `lista`. Cada uno es
+  `imagen` (ken burns, de `MANIFIESTO.imagenes`), `lista` e `ilustracion` (un SVG a
+  medida de 1920 × 1080 que se arma por trazo, escala, fundido, barrido o subiendo, y
+  puede latir con el bombo). `titulo` y `palabras` tienen `entrada` (`sube`, `cae`,
+  `escala`, `enfoca`, `golpe`): elegila por lo que dice la frase, no la misma en todas
+  (la partitura de `revisar reel` avisa). Cada uno es
   `{ nombre, pulsos, cola, campos, dibujar(tl, p, h, ctx) }`: `tl` es el tiempo dentro
   de la parte, `campos` el esquema de `nucleo/panel.js`. La salida empieza en el corte
   y dura `cola` segundos dentro de la parte siguiente. Tipos propios:
@@ -96,17 +100,21 @@ del isotipo (franjas, anillo, monograma, puntos, ondas), colores, peso y espacia
 
 ## Landing (`landing/`)
 
-Una página con portada, secciones (texto, tarjetas o texto e imagen) y pie. Usa los
+Una página con portada, secciones (texto, tarjetas, texto e imagen, o a medida) y pie. Usa los
 temas y la marca. El documento sale de `PROYECTO.landing` (más `tema`) hasta que se
 edita; desde ahí vive en `TRAMOYA.leer('landing')`:
 
 ```js
 { tema, hero: { kicker, titulo, bajada, cta, ctaUrl, imagen },
-  secciones: [{ tipo: 'texto' | 'tarjetas' | 'imagen', kicker, titulo, texto, items, imagen }],
+  secciones: [{ tipo: 'texto' | 'tarjetas' | 'imagen' | 'libre', kicker, titulo, texto, items, imagen, html, css }],
   pie }
 ```
 
 `items` es «título | detalle», uno por línea. Sin `tipo` se deduce (`items` → tarjetas).
+Una sección `libre` es HTML a medida: `{{kicker}}` y `{{titulo}}` ponen los de siempre,
+`{{campo}}` pone ese campo de la sección (editable en el lugar), la clase `rv` aparece al
+entrar en pantalla y `css` va con la sección. Usala cuando el contenido no tenga la forma
+de las otras tres.
 
 **Editor** (`landing/editor.js`, se carga recién al abrirlo): tecla **E** o el botón
 chico «Editar», que solo aparecen en local (`file://`, `localhost`); en un hosting, con

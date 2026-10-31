@@ -41,6 +41,24 @@ cortadas en los bordes.
 
 ## Motion
 
+- **El movimiento sale del contenido, no del tipo de escena.** Al principio cada tipo
+  traía sus entradas fijas, y todas arrancaban igual (antetítulo barrido → título por
+  palabras → ítems escalonados). Elegir un tipo era elegir la animación, así que una
+  presentación con doce capturas se movía doce veces igual, y contenido distinto se
+  metía en la forma que ya había. Ahora los tipos marcan **roles** y cada escena decide
+  (`coreografia`, `mov`, `transicion`); el repertorio es un **registro abierto**
+  (`motion/movimientos.js`) donde un proyecto suma movimientos sin tocar el motor; hay
+  una escena `libre` para lo que no tiene forma de tipo; y `revisar` escribe una
+  **partitura** con avisos de repetición. Ver [movimiento.md](movimiento.md).
+- **Lo que viaja no entra.** Si el título tiene la misma `data-k` que el de la escena
+  anterior, se transforma en lugar de entrar: cambiarle la entrada no se ve. La
+  partitura lo marca como `viaja`; para empezar de cero, `transicion: 'corte'`.
+- **Adaptar al largo del texto.** Letras animadas en una frase larga cansan y palabras
+  sueltas en un párrafo se leen mal: el motor baja `letters` a `words` y `words` a
+  `renglones` según el largo, y el título elige su entrada por cuántas palabras tiene.
+- **Los acentos de fondo (resaltar, tachar) van sobre el texto, no sobre la caja**: en
+  un bloque, se envuelve el contenido en un `span` con `box-decoration-break: clone`
+  para que el trazo siga cada renglón y no el ancho del contenedor.
 - **Las entradas se declaran en el HTML** (`data-m`, `data-s`, `data-at`…) y el motor
   calcula el estado de cada elemento según el tiempo. Escribir una escena nueva es
   escribir marcado, no animación. Referencia: [motion.md](motion.md).

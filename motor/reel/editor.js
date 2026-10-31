@@ -114,6 +114,11 @@
         partes: L.map((l) => ({ nombre: nombreDe(l.parte), desde: l.t0, hasta: l.t1 })),
         audio: doc.sonido.activo ? (ac, h) => banda(ac, h, doc, L) : null,
       });
+      // Partitura (la lee render/revisar.mjs): qué tipo y qué entrada tiene cada parte
+      window.PARTITURA = L.map((l, i) => {
+        const m = l.p.entrada || l.tipo;
+        return { escena: i + 1, tipo: l.tipo, coreografia: '—', transicion: null, pasos: l.parte.pulsos, roles: { parte: [m] }, firma: `${l.tipo}:${m}`, cuenta: { [m]: 1 }, elementos: 1, avisos: l.T ? [] : [`tipo desconocido: ${l.tipo}`] };
+      });
     }
 
     // ---------- Dibujo: cada parte en su ventana, más su cola dentro de la siguiente ----------

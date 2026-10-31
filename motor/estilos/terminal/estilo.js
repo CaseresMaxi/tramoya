@@ -41,7 +41,7 @@ TRAMOYA.registrarEstilo({
     base: { forma: 'puntos', grosor: 9, radio: 0, peso: 700, tracking: 0, colorPalabra: 'tinta' },
     variantes: { monograma: { forma: 'monograma', radio: 0 } },
   },
-  motion: { tema: 'fosforo', transicion: 'camara', entrada: 'escalon', ritmo: 0.8, duracion: 1, recorrido: 0.7, velocidad: 1, desenfoque: false, grano: 0.08, cromo: true },
+  motion: { tema: 'fosforo', transicion: 'camara', entrada: 'escalon', ritmo: 0.8, duracion: 1, recorrido: 0.7, velocidad: 1, desenfoque: false, grano: 0.08, cromo: true, coreografias: ['tipo', 'tecnica', 'sobria'] },
   reel: { bpm: 124, sonido: { activo: true, volumen: 0.8, progresion: 'fija', acordes: false, bombo: true, golpes: 'compas', riser: false } },
   // Prompt delante del antetítulo, cursor al final del título y líneas de barrido sobre el escenario
   css: `

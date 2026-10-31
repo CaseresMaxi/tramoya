@@ -43,7 +43,7 @@ TRAMOYA.registrarEstilo({
     base: { forma: 'puntos', grosor: 13, radio: 9, peso: 600, tracking: 0, isoEscala: 1.2 },
     variantes: { ondas: { forma: 'onda', n: 3, grosor: 10, colorFranjas: 'alternado' } },
   },
-  motion: { tema: 'helado', transicion: 'franjas', franjas: { n: 5, color: 'alternado', grosor: 1.1 }, entrada: 'resorte', ritmo: 1.1, duracion: 1.4, recorrido: 1, velocidad: 1, desenfoque: true, grano: false, cromo: true },
+  motion: { tema: 'helado', transicion: 'franjas', franjas: { n: 5, color: 'alternado', grosor: 1.1 }, entrada: 'resorte', ritmo: 1.1, duracion: 1.4, recorrido: 1, velocidad: 1, desenfoque: true, grano: false, cromo: true, coreografias: ['tipo', 'cinetica', 'sobria'] },
   reel: { bpm: 126, sonido: { activo: true, volumen: 0.85, progresion: 'luminosa', acordes: true, bombo: true, golpes: 'compas', riser: false } },
   // Franjas y marcadores bien redondos
   css: `

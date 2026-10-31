@@ -41,6 +41,6 @@ TRAMOYA.registrarEstilo({
     base: { forma: 'puntos', grosor: 10, radio: 0, colorFranjas: 'bandera', peso: 700, tracking: -40, isoEscala: 1.1 },
     variantes: { franjas: { forma: 'franjas', n: 3, grosor: 14, inclinacion: 0, colorFranjas: 'acento' } },
   },
-  motion: { tema: 'blanco', transicion: 'camara', entrada: 'expo', ritmo: 0.85, duracion: 1.1, recorrido: 1.2, velocidad: 1, desenfoque: true, grano: false, cromo: true },
+  motion: { tema: 'blanco', transicion: 'camara', entrada: 'expo', ritmo: 0.85, duracion: 1.1, recorrido: 1.2, velocidad: 1, desenfoque: true, grano: false, cromo: true, coreografias: ['tipo', 'sobria', 'impacto'] },
   reel: { bpm: 128, sonido: { activo: true, volumen: 0.85, progresion: 'fija', acordes: false, bombo: true, golpes: 'compas', riser: false } },
 });

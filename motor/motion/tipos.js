@@ -14,9 +14,11 @@
 //   css        estilos propios del tipo (se instalan una vez)
 //
 // Atributos que lee el motor en el HTML:
-//   data-m      entrada: up | left | right | fade | pop | zoom | wipe | reveal | draw | count | type | words | letters
+//   data-m      entrada: un movimiento de motion/movimientos.js (up, fade, words, renglones, crecer…) o uno propio
+//   data-e      acento o bucle cuando ya se ve (resaltar, tachar, latir…) · data-es su punto clave · data-x salida
+//   data-r      rol para las coreografías (kicker, titulo, texto, item, hero, dato, logo, numeral); si falta, se deduce
 //   data-s      punto clave en el que entra (0 = al llegar a la escena; 1, 2… = cada avance)
-//   data-at     segundos desde que empieza ese punto clave · data-dur duración · data-stagger desfase entre palabras
+//   data-at     segundos desde que empieza ese punto clave · data-dur duración · data-stagger desfase entre partes · data-orden
 //   data-k      clave compartida: si la escena siguiente tiene la misma, el elemento viaja de una a la otra
 //   data-shape  cómo viaja: text (se escala, por defecto) | bar (barra de un punto) | box (tarjeta) | img (foto)
 //   data-par    paralaje durante el movimiento de cámara (1 = se mueve con la escena)
@@ -33,7 +35,13 @@
 
   // Piezas que comparten varios tipos: viajan entre escenas porque llevan la misma data-k
   const kicker = (d, at = 0) => `<div class="kicker" data-f="kicker" data-k="kicker" data-m="wipe" data-at="${at}" data-dur=".8"><i></i><span>${md(d.kicker)}</span></div>`;
-  const titulo = (d, at = 0.12, cls = '') => `<h2 class="${cls}" data-f="titulo" data-k="titulo" data-m="words" data-at="${at}">${md(d.titulo)}</h2>`;
+  // El título entra según lo que dice: una o dos palabras letra por letra, una pregunta que se
+  // enfoca, uno largo de a renglón; el resto, de a palabra
+  const movTitulo = (t) => {
+    const w = String(t || '').replace(/\*/g, '').trim().split(/\s+/).length;
+    return w <= 2 ? 'letters' : /\?\s*$/.test(t || '') ? 'palabras-fundido' : w > 9 ? 'renglones' : 'words';
+  };
+  const titulo = (d, at = 0.12, cls = '') => `<h2 class="${cls}" data-f="titulo" data-k="titulo" data-m="${movTitulo(d.titulo)}" data-at="${at}">${md(d.titulo)}</h2>`;
   const numeral = (ctx) => `<div class="numeral" data-m="fade" data-dur="1.4" data-par="1.8">${nn(ctx.n)}</div>`;
   // Puntos de una lista: todos juntos, o uno por punto clave
   const lista = (items, uno, base, build) => items.map((x, i) => build(x, i, uno ? `data-s="${i + 1}" data-at=".05" data-dim` : `data-at="${f2(base + i * 0.16)}"`)).join('');
@@ -318,9 +326,32 @@
     },
   };
 
+  // Escena libre: el HTML lo escribe quien arma la presentación, a la medida del contenido.
+  // {{kicker}} y {{titulo}} ponen los de siempre (viajan entre escenas); {{cualquierCampo}} pone
+  // ese campo de la escena como texto (con *acento*) y se edita con un clic. Los data-m, data-s,
+  // data-e… funcionan igual que en cualquier tipo, y `css` va con la escena.
+  TIPOS.libre = {
+    nombre: 'Libre (HTML a medida)',
+    campos: [['html', 'area', 'HTML de la escena ({{campo}} pone un campo)'], ['css', 'area', 'CSS de la escena']],
+    camposDe(d) {
+      const usados = [...new Set([...String(d.html || '').matchAll(/\{\{\s*([\w-]+)\s*\}\}/g)].map((m) => m[1]))];
+      const extra = usados.map((k) => (k === 'kicker' ? KT : k === 'titulo' ? TT : [k, 'area', k]));
+      return [...extra, ...TIPOS.libre.campos];
+    },
+    ejemplo: {
+      kicker: 'A medida', titulo: 'Lo que el contenido *pida*.', dato: '3×',
+      html: '<div class="pad">{{kicker}}{{titulo}}\n  <p class="body" data-f="dato" data-m="pop" data-s="1" data-e="latir" style="font-size:160px">{{dato}}</p>\n</div>',
+      css: '',
+    },
+    render: (d) => {
+      const html = String(d.html || '').replace(/\{\{\s*([\w-]+)\s*\}\}/g, (_, k) => (k === 'kicker' ? kicker(d) : k === 'titulo' ? titulo(d) : md(d[k] ?? '')));
+      return `${d.css ? `<style>${d.css}</style>` : ''}${html}`;
+    },
+  };
+
   // El indicador de "señales" viaja en un data-attribute (tick no recibe los datos)
   const senalesRender = TIPOS.senales.render;
   TIPOS.senales.render = (d, ctx) => senalesRender(d, ctx).replace('class="scope-card"', `class="scope-card" data-ind="${esc(d.indicador || 'sube ▲ | baja ▼')}"`);
 
-  window.MOTION = { TIPOS, helpers: { kicker, titulo, numeral, lista, modo, f2 } };
+  window.MOTION = Object.assign(window.MOTION || {}, { TIPOS, helpers: { kicker, titulo, movTitulo, numeral, lista, modo, f2 } });
 })();

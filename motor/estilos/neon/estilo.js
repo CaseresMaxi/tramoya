@@ -42,7 +42,7 @@ TRAMOYA.registrarEstilo({
     base: { forma: 'onda', n: 3, grosor: 8, colorFranjas: 'degradado', peso: 700, tracking: -10 },
     variantes: { anillo: { forma: 'anillo', grosor: 6 } },
   },
-  motion: { tema: 'synth', transicion: 'franjas', franjas: { n: 6, color: 'alternado', grosor: 0.55 }, entrada: 'expo', ritmo: 0.9, duracion: 1.3, recorrido: 1.2, velocidad: 1.05, desenfoque: true, grano: 0.05, cromo: true },
+  motion: { tema: 'synth', transicion: 'franjas', franjas: { n: 6, color: 'alternado', grosor: 0.55 }, entrada: 'expo', ritmo: 0.9, duracion: 1.3, recorrido: 1.2, velocidad: 1.05, desenfoque: true, grano: 0.05, cromo: true, coreografias: ['tipo', 'cinetica', 'tecnica'] },
   reel: { bpm: 110, sonido: { activo: true, volumen: 0.9, progresion: 'epica', acordes: true, bombo: true, golpes: 'compas', riser: true } },
   // Resplandor en el acento y en las cifras
   css: `

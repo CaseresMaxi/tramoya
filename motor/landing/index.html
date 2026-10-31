@@ -138,6 +138,14 @@
       $('main').innerHTML = D.secciones.map((s, i) => {
         const c = (k) => `secciones.${i}.${k}`;
         const cuerpo = `${kicker(c('kicker'), s.kicker)}${txt('h2', 'rv', c('titulo'), s.titulo, { siempre: true, ph: 'Título' })}${txt('p', 'texto rv', c('texto'), s.texto, { ph: 'Texto (opcional)' })}`;
+        // A medida: el HTML lo escribe quien arma la landing. {{kicker}} y {{titulo}} ponen los de
+        // siempre; {{campo}} pone ese campo de la sección, editable en el lugar; la clase rv aparece al entrar
+        if (s.tipo === 'libre') {
+          const html = String(s.html || '').replace(/\{\{\s*([\w-]+)\s*\}\}/g, (_, k) => (k === 'kicker' ? kicker(c('kicker'), s.kicker)
+            : k === 'titulo' ? txt('h2', 'rv', c('titulo'), s.titulo, { siempre: true, ph: 'Título' }) : txt('span', '', c(k), s[k] ?? '', { siempre: true, ph: k })));
+          return `
+        <section class="sec libre" id="s${i}">${s.css ? `<style>${s.css}</style>` : ''}<div class="wrap">${html}</div></section>`;
+        }
         if (s.tipo === 'imagen') return `
         <section class="sec con-imagen" id="s${i}"><div class="wrap"><div>${cuerpo}</div>${s.imagen ? `<figure class="foto rv"><img src="${U.esc(s.imagen)}" alt=""></figure>` : ''}</div></section>`;
         const cards = s.tipo === 'tarjetas' && s.items ? `<div class="cards">${U.pairs(s.items).map((it, k) => `<div class="card rv"><i></i>${txt('b', '', `${c('items')}.${k}.t`, it.t, { siempre: true, ph: 'Título' })}${txt('span', '', `${c('items')}.${k}.d`, it.d, { siempre: true, ph: 'Detalle' })}</div>`).join('')}</div>` : '';

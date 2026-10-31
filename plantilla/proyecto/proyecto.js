@@ -50,6 +50,8 @@ window.PROYECTO = {
       { tipo: 'barras', pulsos: 4 },
       { tipo: 'palabras', pulsos: 4, palabras: 'Una\nidea,\nmuchas\npiezas.' },
       { tipo: 'dato', pulsos: 4, numero: '15', unidad: 's', texto: 'de video, cuadro por cuadro' },
+      { tipo: 'ilustracion', pulsos: 4, entrada: 'trazo', svg: '<path d="M560 700 L860 400 L1060 600 L1360 300" fill="none" stroke="currentColor" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/><circle cx="1360" cy="300" r="40" fill="none" stroke="currentColor" stroke-width="20"/>' },
+      { tipo: 'titulo', pulsos: 4, texto: 'Cada idea, *su* movimiento.', entrada: 'escala' },
       { tipo: 'logo', pulsos: 12, bajada: 'Presentaciones, videos y piezas gráficas en HTML', cierre: true },
     ],
   },
@@ -60,6 +62,9 @@ window.PROYECTO = {
     secciones: [
       { kicker: 'Piezas', titulo: 'Un proyecto, *cinco* salidas.', items: 'Presentación motion | Puntos clave, cámara y morph entre escenas.\nReel | Pieza corta con música generada, exportable a MP4.\nPóster | A1 a 300 dpi y PDF vectorial.\nLanding | Esta página.\nMarca | Editor del logo con exportación a SVG y PNG.' },
       { kicker: 'Cómo', titulo: 'El tiempo es *la única entrada*.', texto: 'Cada cuadro sale de una función del tiempo. Por eso se puede pausar, rebobinar, revisar cuadro por cuadro y renderizar a video con el mismo código que se ve en el navegador.' },
+      { tipo: 'libre', kicker: 'A medida', titulo: 'Si ninguna sección sirve, *se escribe*.', antes: 'Llenar una plantilla', despues: 'Darle forma al contenido',
+        html: '{{kicker}}{{titulo}}\n<div class="contra rv"><s>{{antes}}</s><b>{{despues}}</b></div>',
+        css: '.contra{display:flex; gap:48px; align-items:baseline; flex-wrap:wrap; margin-top:40px; font-size:clamp(28px,4vw,56px)} .contra s{color:var(--muted)} .contra b{color:var(--accent)}' },
     ],
     pie: 'Tramoya · plantilla de ejemplo',
   },

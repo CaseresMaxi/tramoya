@@ -43,7 +43,7 @@ TRAMOYA.registrarEstilo({
     variantes: { anillo: { forma: 'anillo', grosor: 5 } },
   },
   // Sin cromo: el letterbox ocupa el lugar del encabezado y el pie
-  motion: { tema: 'sala', transicion: 'camara', entrada: 'suave', ritmo: 1.35, duracion: 2, recorrido: 1.4, velocidad: 0.9, desenfoque: true, grano: 0.16, cromo: false },
+  motion: { tema: 'sala', transicion: 'camara', entrada: 'suave', ritmo: 1.35, duracion: 2, recorrido: 1.4, velocidad: 0.9, desenfoque: true, grano: 0.16, cromo: false, coreografias: ['tipo', 'editorial', 'sobria'] },
   reel: { bpm: 84, sonido: { activo: true, volumen: 0.95, progresion: 'tension', acordes: true, bombo: true, golpes: 'partes', riser: true } },
   // Franjas de cinemascope arriba y abajo del escenario
   css: `

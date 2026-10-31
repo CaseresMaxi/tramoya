@@ -1,11 +1,18 @@
 // Tipos de escena propios del proyecto. Se suman a los de motion/tipos.js (y pisan a
 // uno con el mismo nombre). Mismo formato: ver el comentario al principio de ese archivo.
 //
-// Ejemplo: una línea de tiempo con hitos, que se recorre de a uno por avance.
+// Ejemplos: un movimiento propio (sello) y una línea de tiempo con hitos, que se recorre de a uno por avance.
 (function () {
   if (!window.MOTION) return; // esta parte es de la presentación; el reel carga el archivo por TIPOS_REEL
   const { md, esc, pairs } = window.TRAMOYA;
   const { kicker, titulo, modo } = window.MOTION.helpers;
+
+  // Movimientos propios: cuando el contenido pide uno que no está (ver motion/movimientos.js).
+  // Un sello que cae girado y se asienta: para marcar algo como decidido.
+  window.MOTION.registrarMovimiento('sello', {
+    nombre: 'Sello', dur: 0.55, usar: 'Algo que queda decidido, aprobado o marcado.',
+    aplicar: (c, r) => { r.op = Math.min(1, c.p * 4); r.tr = `rotate(${-8 - 10 * (1 - c.e)}deg) scale(${1 + 0.9 * (1 - c.e)})`; },
+  });
 
   window.TIPOS_PROYECTO = {
     hitos: {

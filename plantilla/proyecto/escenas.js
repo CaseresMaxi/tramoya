@@ -3,6 +3,14 @@
 // pasos ('uno' | 'todo'), entrada (derecha | izquierda | abajo | arriba | zoom), logo, ocultar.
 // Los campos de cada tipo están en motion/tipos.js (y en proyecto/tipos.js, los propios).
 //
+// El movimiento se decide por escena, según lo que dice (ver referencias/movimiento.md):
+//   coreografia  cómo se mueve cada rol: sobria | editorial | cinetica | tecnica | impacto | quieta…
+//   mov          por campo o por rol: { titulo: 'renglones', puntos: { m: 'pop', orden: 'centro' },
+//                '@item': …, numero: { e: 'latir' } } · m entrada · e acento · x salida · s · at · dur
+//   transicion   franjas | camara | morph | fundido | corte (o { tipo, dur })
+//   focos        cámara dentro de la escena, uno por punto clave: [{ x, y, s }]
+// Y si ningún tipo sirve: tipo 'libre' (el HTML a medida) o un tipo propio en proyecto/tipos.js.
+//
 // Desde el editor (tecla E) se puede editar todo y después "Copiar como escenas.js".
 window.ESCENAS = [
   {
@@ -54,14 +62,14 @@ window.ESCENAS = [
     notas: 'El tiempo ambiente también es determinístico en el render.',
   },
   {
-    tipo: 'codigo', mantener: 10,
+    tipo: 'codigo', mantener: 10, coreografia: 'tecnica', transicion: 'corte',
     kicker: 'Atributos',
     titulo: 'El montaje se escribe en el *HTML*.',
     cuerpo: 'El motor lee atributos; no hay que programar animaciones.',
-    tabla: 'Atributo | Qué hace | Ejemplo\ndata-m | Tipo de entrada | words\ndata-s | Punto clave | 1\ndata-at | Segundo de inicio | .4\ndata-k | Viaja a la siguiente | titulo',
+    tabla: 'Atributo | Qué hace | Ejemplo\ndata-m | Entrada | renglones\ndata-e | Acento | resaltar\ndata-s | Punto clave | 1\ndata-k | Viaja | titulo',
     codigo: '<h2 data-m="words" data-k="titulo">\n  Una idea por escena.\n</h2>\n<li data-m="left" data-s="1" data-dim>\n  Entra en el segundo avance.\n</li>',
     nota: 'La referencia completa está en referencias/motion.md de la skill.',
-    notas: 'El código se escribe solo en el segundo punto clave.',
+    notas: 'Coreografía técnica: el título se decodifica y el código se escribe solo.',
   },
   {
     tipo: 'columnas', mantener: 10,
@@ -76,7 +84,7 @@ window.ESCENAS = [
     notas: 'El monitor de la derecha pasa en bucle.',
   },
   {
-    tipo: 'hitos', mantener: 8,
+    tipo: 'hitos', mantener: 8, coreografia: 'cinetica',
     kicker: 'Un tipo propio',
     titulo: 'Cada proyecto suma *los suyos*.',
     hitos: 'Tipo | Se declara en proyecto/tipos.js\nCampos | Aparecen solos en el editor\nCSS | Viaja con el tipo\nListo | Se usa como cualquier otro',
@@ -90,10 +98,26 @@ window.ESCENAS = [
     barras: 'Para presentar | 0\nPara exportar video | 100',
     unidadBarras: '% de dependencias',
     nota: 'Para exportar: Node, playwright-core, Chrome y ffmpeg.',
+    mov: { numero: { e: 'agrandar', es: 0 } },
     notas: 'La cifra cuenta desde cero (data-m="count").',
   },
   {
-    tipo: 'cita', mantener: 7,
+    tipo: 'libre', mantener: 8, transicion: 'fundido',
+    kicker: 'A medida',
+    titulo: 'El contenido *manda*.',
+    antes: 'Elegir una plantilla y llenarla.',
+    despues: 'Decidir qué tiene que entender quien mira, y moverlo para eso.',
+    html: `<div class="pad">{{kicker}}{{titulo}}
+  <p class="body" data-f="antes" data-m="fade" data-at=".6" style="margin-top:70px; font-size:44px">{{antes}}</p>
+  <p class="body" data-f="despues" data-m="renglones" data-s="1" data-at=".5" style="font-size:56px; max-width:1300px; color:var(--strong)">{{despues}}</p>
+  <div class="sello" data-m="sello" data-s="2" data-at=".1">a medida</div>
+</div>`,
+    css: '.sello{position:absolute; right:180px; bottom:200px; padding:18px 36px; border:6px solid var(--accent); color:var(--accent); font:800 52px var(--font-display); text-transform:uppercase; transform-origin:50% 50%}',
+    mov: { antes: { e: 'tachar', es: 1 } },
+    notas: 'Una escena libre: el HTML lo escribe el agente. Lo de antes se tacha cuando llega lo nuevo; el sello es un movimiento propio (proyecto/tipos.js).',
+  },
+  {
+    tipo: 'cita', mantener: 7, coreografia: 'editorial',
     texto: 'Mirá el resultado en un *navegador real* antes de darlo por hecho.',
     autor: 'Regla de la casa', rol: 'referencias/aprendizajes.md',
     notas: 'La regla que más horas ahorró.',

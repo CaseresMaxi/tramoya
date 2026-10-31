@@ -147,7 +147,10 @@ Las de `motion` van a `PROYECTO.estilo` (y al panel «Movimiento» del editor):
 | Perilla | Por defecto | Qué cambia |
 |---------|-------------|------------|
 | `tema` | el primero | Tema con el que arranca |
-| `transicion` | franjas | `franjas` (barren + cámara) · `camara` · `morph` (sin cámara, solo se transforma) |
+| `transicion` | franjas | `franjas` (barren + cámara) · `camara` · `morph` (sin cámara, solo se transforma) · `fundido` · `corte`. Cada escena puede pedir otra |
+| `coreografia` | tipo | La coreografía base: cómo se mueve cada rol (`sobria`, `editorial`, `cinetica`, `tecnica`, `impacto`, `quieta`; ver `referencias/movimiento.md`). Es carácter del estilo; cada escena puede pedir otra |
+| `coreografias` | — | Rotación cuando se repite el tipo de escena (por defecto: la base, editorial, cinetica, sobria) |
+| `variar` | true | `false`: no rotar aunque se repita el tipo
 | `franjas` | `{ n: 4, color: 'mixto', grosor: 1 }` | Cuántas (1–8), color (`mixto`: acento afuera y tinta adentro · `acento` · `tinta` · `alternado`) y grosor relativo |
 | `duracion` | 1.5 | Segundos de cada transición entre escenas |
 | `recorrido` | 1 | Cuánto viaja la cámara (1 = 900 px; 0 = casi en el lugar) |

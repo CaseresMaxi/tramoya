@@ -5,7 +5,7 @@
 (function () {
   const U = window.TRAMOYA, P = window.PROYECTO, L = window.LANDING;
   const $ = (id) => document.getElementById(id);
-  const TIPOS = { texto: 'Texto', tarjetas: 'Tarjetas', imagen: 'Texto e imagen' };
+  const TIPOS = { texto: 'Texto', tarjetas: 'Tarjetas', imagen: 'Texto e imagen', libre: 'A medida (HTML)' };
 
   const CSS = `
     body.editando{padding-right:380px}
@@ -117,11 +117,12 @@
       ];
       if (s.tipo === 'tarjetas') schema.push({ key: 'items', label: 'Tarjetas: «título | detalle», una por línea', type: 'textarea' });
       if (s.tipo === 'imagen') schema.push({ key: 'imagen', label: 'Imagen', type: 'select', options: () => imagenes(s.imagen) }, accionSubir(s, 'imagen'));
+      if (s.tipo === 'libre') schema.push({ key: 'html', label: 'HTML de la sección ({{campo}} pone un campo editable)', type: 'textarea' }, { key: 'css', label: 'CSS de la sección', type: 'textarea' });
       U.panel({
         contenedor: det.querySelector('.cuerpo'), schema, cfg: s,
         alCambiar: (k) => {
           cambio();
-          if (k === 'tipo') { if (s.tipo === 'tarjetas' && !s.items) s.items = 'Título | Detalle'; cambio(); armar(); }
+          if (k === 'tipo') { if (s.tipo === 'tarjetas' && !s.items) s.items = 'Título | Detalle'; if (s.tipo === 'libre' && !s.html) s.html = '{{kicker}}{{titulo}}\n<p class="texto rv">{{texto}}</p>'; cambio(); armar(); }
           if (k === 'kicker' || k === 'titulo') det.querySelector('summary b').firstChild.textContent = U.plain(s.kicker || s.titulo) || 'Sin título';
         },
       });
@@ -164,6 +165,7 @@
     const s = { tipo, kicker: 'Sección', titulo: 'Un título *nuevo*.', texto: tipo === 'tarjetas' ? '' : 'Un párrafo corto que cuente de qué se trata.' };
     if (tipo === 'tarjetas') s.items = 'Primera | Un detalle breve.\nSegunda | Otro detalle.\nTercera | Y uno más.';
     if (tipo === 'imagen') s.imagen = window.MANIFIESTO?.imagenes?.[0] || '';
+    if (tipo === 'libre') Object.assign(s, { texto: '', dato: '3×', html: '{{kicker}}{{titulo}}\n<p class="rv" style="font-size:120px; font-weight:800; color:var(--accent)">{{dato}}</p>', css: '' });
     L.doc.secciones.push(s); abiertas.add(s); cambio(); armar();
     $('s' + (L.doc.secciones.length - 1))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });

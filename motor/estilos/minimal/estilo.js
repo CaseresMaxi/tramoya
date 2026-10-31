@@ -41,7 +41,7 @@ TRAMOYA.registrarEstilo({
     base: { forma: 'ninguna', layout: 'palabra', peso: 500, tracking: -40, colorPalabra: 'tinta' },
     variantes: { punto: { forma: 'anillo', grosor: 3 } },
   },
-  motion: { tema: 'blanco', transicion: 'morph', entrada: 'suave', ritmo: 1.2, duracion: 1.4, recorrido: 1, velocidad: 1, desenfoque: false, grano: false, cromo: true },
+  motion: { tema: 'blanco', transicion: 'morph', entrada: 'suave', ritmo: 1.2, duracion: 1.4, recorrido: 1, velocidad: 1, desenfoque: false, grano: false, cromo: true, coreografias: ['tipo', 'sobria', 'quieta'] },
   reel: { bpm: 100, sonido: { activo: true, volumen: 0.7, progresion: 'luminosa', acordes: true, bombo: false, golpes: 'no', riser: false } },
   // Las tarjetas sin relleno, solo con filete
   css: `
