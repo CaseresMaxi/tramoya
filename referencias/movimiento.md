@@ -51,7 +51,7 @@ Está en `motion/movimientos.js` y es **abierto**: cada proyecto suma los suyos.
 | `abrir` · `circulo` | Una revelación; una imagen con foco en su centro |
 | `reveal` | Fotos: cortina y la imagen se asienta |
 | `draw` | Trazos SVG |
-| `count` | Una cifra (`data-to`, `data-desde`; respeta coma y decimales) |
+| `count` | Una cifra (`data-to`, `data-desde`; respeta coma decimal y punto de miles: `2.500`, `1.250,5`) |
 | `type` · `desordenar` | Código, comandos; datos que se decodifican |
 | `seguir` | Un cursor o un paquete que recorre (`data-camino`, termina en `0 0`) |
 | `words` · `letters` · `renglones` | Texto que se lee mientras llega: palabras, una o dos palabras con peso, párrafos |

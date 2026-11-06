@@ -144,3 +144,6 @@ body.render .controls, body.render .notes, body.render .help, body.render .pins{
 .corr .cita{font-size:11px; color:#8d877e; margin:6px 0; font-style:italic}
 .corr textarea{width:100%; min-height:60px; background:#0f0f12; color:#f4f1eb; border:1px solid #2b2b31; border-radius:7px; padding:8px; font:inherit; font-size:13px; resize:vertical}
 .corr .row-btns{margin-top:6px}
+
+/* Enlaces internos (índices): data-ir="ancla" salta a esa escena sin recargar */
+.stage [data-ir]{cursor:pointer}

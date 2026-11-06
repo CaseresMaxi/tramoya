@@ -74,10 +74,15 @@
   // Cuenta hasta data-to (con los decimales y el separador que tenga), desde data-desde
   R('count', { nombre: 'Cuenta', dur: 1.6, usar: 'Una cifra que importa: que se vea llegar.',
     aplicar: (c) => {
-      const raw = String(c.d.to ?? '0'), coma = raw.includes(','), n = parseFloat(raw.replace(/\./g, coma ? '' : '.').replace(',', '.')) || 0;
-      const dec = (raw.split(/[.,]/)[1] || '').length * (coma || raw.split('.').length === 2 ? 1 : 0), desde = parseFloat(c.d.desde) || 0;
+      const raw = String(c.d.to ?? '0'), coma = raw.includes(',');
+      // Punto de miles (2.500, 1.250.000; con coma decimal, 1.250,5): se cuenta el entero y se escribe con puntos
+      const miles = /^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(raw);
+      const n = parseFloat(raw.replace(/\./g, coma || miles ? '' : '.').replace(',', '.')) || 0;
+      const dec = miles ? (raw.split(',')[1] || '').length : (raw.split(/[.,]/)[1] || '').length * (coma || raw.split('.').length === 2 ? 1 : 0), desde = parseFloat(c.d.desde) || 0;
       const v = lerp(desde, n, cl(c.e));
-      c.el.textContent = coma ? v.toFixed(dec).replace('.', ',') : v.toFixed(dec);
+      let txt = v.toFixed(dec);
+      if (miles) { const [e, d] = txt.split('.'); txt = e.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + (d ? ',' + d : ''); }
+      c.el.textContent = coma || miles ? txt.replace(/\.(?=\d+$)/, miles ? '.' : ',') : txt;
     } });
   // Sigue un camino SVG (data-camino, en px y terminando en 0 0 = su lugar)
   const svgNS = 'http://www.w3.org/2000/svg';

@@ -57,6 +57,7 @@ Campos comunes:
 | `ocultar` | Lista de campos (`data-f`) que no se muestran |
 | `cromo` | `false` para ocultar encabezado y pie en esta escena |
 | `activa` | `false` para saltearla |
+| `ancla` | Nombre para saltar a esta escena: un elemento con `data-ir="ancla"` (o un número) salta ahí al hacer clic, sin recargar ni salir de pantalla completa; también `MOTION.ir('ancla', paso?)`. Sin paso, cae en el último punto clave |
 | `correcciones` | Las agrega el editor |
 
 Texto: `*palabra*` va en color de acento. Campos `lines`: uno por línea. Campos `pairs`:
@@ -110,7 +111,8 @@ los movimientos viven en `motion/movimientos.js` y un proyecto suma los suyos co
 | `data-shape` | Cómo viaja: `text` (por defecto), `bar` (la barra de un punto de lista), `box` (tarjeta, panel), `img` (foto) |
 | `data-par` | Paralaje durante el movimiento de cámara (1 = con la escena; 1,8 = más rápido; 0,45 = más lento) |
 | `data-dim` | Se atenúa cuando entra el punto siguiente |
-| `data-out` | Punto clave en el que se va: sirve para destacar una cosa por vez |
+| `data-out` | Punto clave en el que se va: sirve para destacar una cosa por vez. Con un rango (`1-4`) se aparta durante esos puntos clave y vuelve en el siguiente (p. ej., el título mientras la cámara hace zoom) |
+| `data-ir` | Enlace interno: al hacer clic salta a la escena con ese `ancla` (o número); `data-paso` elige el punto clave |
 | `data-f` | Campo que muestra: con el editor abierto, un clic lo edita (y elige su movimiento) |
 
 Claves que conviene repetir entre tipos para que haya morph: `kicker`, `titulo`,

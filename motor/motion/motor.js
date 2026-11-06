@@ -250,7 +250,7 @@
       const anims = [...el.querySelectorAll('[data-m], [data-e]')].map((e, order) => {
         const kind = e.dataset.m || 'quieto', def = MOV[kind], ds = e.dataset;
         const a = { e, kind, def, order, s: +ds.s || 0, at: (+ds.at || 0) * R, dur: +(ds.dur || def.dur || 0.9) * R, st: +(ds.stagger || def.st || 0) * R,
-          par: +(ds.par || 1), dim: e.hasAttribute('data-dim'), out: ds.out ? +ds.out : null, parts: e._parts || null,
+          par: +(ds.par || 1), dim: e.hasAttribute('data-dim'), out: ds.out ? String(ds.out).split('-').map(Number) : null, parts: e._parts || null,
           x: MOV[ds.x] ? ds.x : null, txt: def.texto || kind === 'type' || kind === 'desordenar' ? blancoDeTexto(e) : e };
         if (a.parts) { a.unit = e._unit; a.rank = rangos(e._units, ds.orden || def.orden); a.maxRank = Math.max(0, ...a.rank); }
         if (ds.e && MOV[ds.e]) { const ad = MOV[ds.e]; a.acc = { def: ad, s: ds.es !== undefined ? +ds.es : a.s, at: ds.eat !== undefined ? +ds.eat * R : ds.es !== undefined ? 0.1 * R : a.at + a.dur, dur: +(ds.edur || ad.dur || 0.7) * R }; }
@@ -454,8 +454,14 @@
       unir(r, o);
     }
     if (a.dim && sc.stepStart[a.s + 1] !== undefined) r.op *= 1 - 0.55 * exOut(cl((T_ - sc.stepStart[a.s + 1]) / 0.5));
-    // data-out: se va del todo al empezar ese punto clave (para destacar una cosa por vez)
-    if (a.out !== null && sc.stepStart[a.out] !== undefined) r.op *= 1 - exOut(cl((T_ - sc.stepStart[a.out]) / 0.4));
+    // data-out: se va del todo al empezar ese punto clave (para destacar una cosa por vez).
+    // Con un rango ("1-4") se aparta durante esos puntos clave y vuelve en el siguiente.
+    if (a.out !== null && sc.stepStart[a.out[0]] !== undefined) {
+      let k = exOut(cl((T_ - sc.stepStart[a.out[0]]) / 0.4));
+      const vuelve = a.out.length > 1 ? sc.stepStart[a.out[1] + 1] : undefined;
+      if (vuelve !== undefined) k *= 1 - exOut(cl((T_ - vuelve) / 0.4));
+      r.op *= 1 - k;
+    }
     if (a.par !== 1) r.tr = `translate(${(sc.L.cam.tx * (a.par - 1)) / sc.L.s}px, ${(sc.L.cam.ty * (a.par - 1)) / sc.L.s}px) ` + r.tr;
     escribir(e, r);
   }
@@ -612,6 +618,17 @@
     target = ks.length ? ks[ks.length - 1].t : 0; if (jumpTo) T = target;
   }
   function seek(t, play = false) { T = cl(t, 0, TOTAL); target = play ? target : T; }
+  // Salta a una escena sin recargar (y sin salir de pantalla completa): por número (desde 1)
+  // o por su campo `ancla`. Sin paso, al último punto clave (la escena entera). Sirve para
+  // índices: un elemento con data-ir="ancla" (o "3") en cualquier escena salta al hacer clic.
+  function ir(destino, paso) {
+    const i = typeof destino === 'number' || /^\d+$/.test(String(destino)) ? +destino - 1 : S.findIndex((sc) => sc.d.ancla === destino);
+    const sc = S[i];
+    if (!sc) return false;
+    T = target = sc.keyT[cl((paso || sc.steps) - 1, 0, sc.steps - 1)];
+    return true;
+  }
+  window.MOTION.ir = ir;
   // Repite el tramo que lleva al punto clave actual
   function replay() {
     const i = KEYS.findIndex((k) => k.t >= T - EPS), k = KEYS[Math.max(0, i)];
@@ -752,6 +769,8 @@
     if (RENDER) return;
     if (marking) return addCorrection(e);
     if (editorOpen) return selectAt(e);
+    const link = e.target.closest?.('[data-ir]');
+    if (link) { e.preventDefault(); return ir(link.dataset.ir, +link.dataset.paso || 0); }
     next();
   });
   addEventListener('keydown', (e) => {
