@@ -117,7 +117,7 @@ node herramientas/tramoya.mjs empaquetar        # → mi-proyecto.zip, se abre e
 | `abrir [pieza]` | Un solo proyecto en el navegador; los editores guardan en `proyecto/estado/` y las páginas se recargan si cambian los archivos |
 | `estado [--json]` | Qué se editó, los pedidos al agente y las correcciones pendientes |
 | `revisar <pieza>` | Un PNG por punto clave y los errores de consola |
-| `video <motion\|reel>` · `poster` · `marca` | MP4 · PNG + PDF · SVG/PNG del logo |
+| `video <motion\|reel>` · `poster [--pagina ruta]` · `marca` | MP4 · PNG + PDF (la hoja de ruta, de una o dos caras, con las copias por hoja que se pidan) · SVG/PNG del logo |
 | `estilos` · `estilo <id>` | La galería de estilos · elegir uno |
 | `empaquetar [--solo-proyecto]` · `importar <zip>` | Llevar y traer proyectos |
 | `historial` · `restaurar <pieza> [n]` | Versiones anteriores de lo editado · volver a una |

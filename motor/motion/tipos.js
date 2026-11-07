@@ -328,15 +328,18 @@
 
   // Escena libre: el HTML lo escribe quien arma la presentación, a la medida del contenido.
   // {{kicker}} y {{titulo}} ponen los de siempre (viajan entre escenas); {{cualquierCampo}} pone
-  // ese campo de la escena como texto (con *acento*) y se edita con un clic. Los data-m, data-s,
-  // data-e… funcionan igual que en cualquier tipo, y `css` va con la escena.
+  // ese campo de la escena como texto (con *acento*) y se edita con un clic. {{img:campo}} pone la
+  // dirección de la imagen de ese campo (<img src="{{img:foto}}">) y el editor deja cambiarla: con
+  // data-f="foto" en el elemento, un clic la elige. Los data-m, data-s, data-e… funcionan igual
+  // que en cualquier tipo, y `css` va con la escena.
   TIPOS.libre = {
     nombre: 'Libre (HTML a medida)',
     campos: [['html', 'area', 'HTML de la escena ({{campo}} pone un campo)'], ['css', 'area', 'CSS de la escena']],
     camposDe(d) {
       const usados = [...new Set([...String(d.html || '').matchAll(/\{\{\s*([\w-]+)\s*\}\}/g)].map((m) => m[1]))];
       const extra = usados.map((k) => (k === 'kicker' ? KT : k === 'titulo' ? TT : [k, 'area', k]));
-      return [...extra, ...TIPOS.libre.campos];
+      const imgs = [...new Set([...String(d.html || '').matchAll(/\{\{\s*img:([\w-]+)\s*\}\}/g)].map((m) => m[1]))];
+      return [...extra, ...imgs.map((k) => [k, 'image', k === 'imagen' ? 'Imagen' : `Imagen (${k})`]), ...TIPOS.libre.campos];
     },
     ejemplo: {
       kicker: 'A medida', titulo: 'Lo que el contenido *pida*.', dato: '3×',
@@ -344,7 +347,7 @@
       css: '',
     },
     render: (d) => {
-      const html = String(d.html || '').replace(/\{\{\s*([\w-]+)\s*\}\}/g, (_, k) => (k === 'kicker' ? kicker(d) : k === 'titulo' ? titulo(d) : md(d[k] ?? '')));
+      const html = String(d.html || '').replace(/\{\{\s*img:([\w-]+)\s*\}\}/g, (_, k) => esc(d[k] ?? '')).replace(/\{\{\s*([\w-]+)\s*\}\}/g, (_, k) => (k === 'kicker' ? kicker(d) : k === 'titulo' ? titulo(d) : md(d[k] ?? '')));
       return `${d.css ? `<style>${d.css}</style>` : ''}${html}`;
     },
   };

@@ -69,7 +69,61 @@ pestaña de observaciones. Los valores por defecto salen de `PROYECTO.poster`.
   `tramoya estado`; "✓ Hecha" (o `"hecho": true`) la da por resuelta. "Copiar para el
   chat" arma la lista de las pendientes.
 - Para otro diseño de póster: copiá `poster/index.html`; el maquetado está en px de un
-  A1 (2245 × 3179) y los parámetros en el esquema de `poster/poster.js`.
+  A1 (2245 × 3179) y los parámetros en el esquema de `poster/poster.js`. Un diseño propio
+  se exporta con `tramoya poster --pagina <nombre>` (`poster/<nombre>.html`) si expone
+  `window.POSTER = { ancho, alto, mm(), formato(), archivo }` (`archivo` da el nombre del PNG).
+
+### Hoja de ruta (`poster/ruta.html`)
+
+La presentación momento a momento, en un A1 vertical: una fila por escena activa (número,
+nombre y **qué pasa en escena**; el libreto —**qué se dice**— es opcional y viene apagado) y,
+abajo, las escenas de anexo. Sale de
+las escenas y de sus `notas`, así que sigue al contenido: si cambia la presentación,
+cambia la hoja.
+
+- **De las notas:** lo que va entre `«comillas»` es lo que se dice; un `(→)` o
+  `(→ comentario)` es un avance dentro de la escena (se muestra como →); el resto es lo
+  que pasa en escena. Si una escena repite el título de otra, el campo `ruta` le da el
+  nombre que lleva en la hoja. `anexo: true` la manda al recuadro de abajo.
+- **Parámetros:** textos (rótulo, título, bajada, cómo se maneja, anexo, pie), qué mostrar
+  (el libreto se prende con «Qué se dice») y tamaños. Los valores por defecto salen de `PROYECTO.ruta` y lo editado queda en
+  `estado/ruta-cfg.json`; las observaciones, en `estado/ruta-obs.json`.
+- **Exportar:** `tramoya poster --pagina ruta [--formato A3]` → `salida/hoja-de-ruta-A1.png`
+  y `.pdf` (en el tablero, Salidas → Póster → «Hoja de ruta»).
+- **Más de una cara** (frente y dorso): la de adelante es la ruta; las demás las pone el
+  proyecto con `window.RUTA_CARAS` en `proyecto/tipos.js` (se carga también en esta
+  página, y el `if (!window.MOTION) return` de ese archivo cuida lo de la presentación):
+
+  ```js
+  window.RUTA_CARAS = (window.RUTA_CARAS || []).concat([{
+    id: 'dorso', nombre: 'Dorso',
+    campos: [{ group: 'Dorso' }, { key: 'dorsoTitulo', label: 'Título', type: 'text', def: '…' }], // opcional: parámetros del panel
+    css: '.poster[data-cara="dorso"] { … }',                                                       // opcional
+    render({ U, P, cfg, escenas }) { return '<header>…</header>'; },                               // HTML, o null = sin esa cara
+  }]);
+  ```
+
+  `escenas` son las escenas activas (así una cara puede dibujar lo que muestra una escena, por
+  ejemplo una hoja de datos, y seguir al contenido). El editor tiene una barra Frente / Dorso;
+  al exportar sale **un PNG por cara** (`hoja-de-ruta-A1-frente.png`, `…-dorso.png`) y **un
+  PDF con una página por cara**, listo para imprimir de los dos lados (volteando por el
+  borde largo). Un diseño propio de póster hace lo mismo declarando
+  `window.POSTER.caras = () => ['frente', 'dorso']` y una `.poster[data-cara="…"]` por cara.
+- **Impresión en la hoja:** cada cara es un A1 vertical y la hoja es el papel del formato
+  elegido. El grupo «Impresión en la hoja» del panel decide cuántas **copias por hoja** entran
+  (1, 2, 4, 6, 8, 9, 12 o 16, para imprimir y cortar): la rejilla (columnas × filas) y la
+  orientación se eligen solas para que queden lo más grandes posible (2 → apaisada 2 × 1,
+  4 → vertical 2 × 2, 8 → apaisada 4 × 2…), o se fuerza la orientación. Además: **margen** (en
+  mm; las impresoras comunes no llegan al borde, 5 a 8 mm suelen alcanzar), **separación** entre
+  copias y **líneas de corte**. «Qué lleva cada hoja»: *una sola cara, repetida* (cada cara en
+  sus hojas: la del dorso queda justo detrás de la del frente al imprimir de los dos lados, y al
+  cortar cada copia tiene frente y dorso) o *frente y dorso mezclados* en la misma hoja.
+  Cada copia se achica (nunca se estira) para entrar, centrada; con margen 0 y una por hoja es la
+  cara tal cual. En el editor, el botón «En la hoja» de la barra de arriba muestra el resultado
+  y cuánto mide cada copia; el PNG, el PDF y Ctrl+P salen de ese mismo armado (un PNG y una
+  página por hoja). Un diseño propio lo usa declarando `window.POSTER.hojas = () => ['frente',
+  'dorso']` (o `['hoja']`) y un `.hoja[data-hoja="…"]` por hoja, más `window.POSTER.horizontal()`
+  si el papel va girado: `render/poster.mjs` exporta una unidad por hoja.
 
 ## Marca (`marca/`)
 

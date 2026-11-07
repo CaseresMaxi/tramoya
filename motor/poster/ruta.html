@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hoja de ruta</title>
+  <link rel="icon" href="../proyecto/assets/logo/favicon.svg" type="image/svg+xml" />
+  <script src="../nucleo/util.js"></script>
+  <script src="../proyecto/proyecto.js"></script>
+  <script src="../proyecto/estilo/estilo.js"></script>
+  <script src="../proyecto/estado.js"></script>
+  <script>TRAMOYA.instalarFuentes(); TRAMOYA.instalarTemas('.poster[data-theme]');</script>
+  <style>
+    /* El póster se diseña en píxeles CSS de un A1 vertical a 96 px/in: 594 × 841 mm = 2245 × 3179 px.
+       Toda la serie A tiene la misma proporción (1:√2), así que A2, A3 y A4 son el mismo diseño
+       exportado a otra escala (render/poster.mjs). */
+    :root{--w:2245px; --h:3179px; --ui:#16161a; --ui-line:#2b2b31}
+    *{box-sizing:border-box}
+    html,body{margin:0; background:#0b0b0d; color:#f4f1eb; font-family:var(--font-body)}
+    @page{size:594mm 841mm; margin:0} /* el tamaño y la orientación de verdad los pone ruta.js (#paginaCss) */
+
+    /* ---------- Póster: la hoja de ruta ----------
+       Un A1 vertical (2245 × 3179 px), como poster/index.html: se exporta a cualquier A con la misma
+       proporción. Es una columna: encabezado, la ruta (una fila por momento, repartidas a lo alto),
+       las escenas de anexo y el pie. */
+    .poster{position:relative; width:var(--w); height:var(--h); overflow:hidden; background:var(--bg); color:var(--text);
+      display:flex; flex-direction:column; padding:130px 213px 90px}
+    .poster *{margin:0}
+    .poster em{color:var(--accent); font-style:var(--acento-estilo, italic); font-weight:var(--acento-peso, 700)}
+
+    .cab{padding-bottom:40px; border-bottom:2px solid var(--line)}
+    .rotulo{display:flex; align-items:center; gap:26px; font:700 30px var(--kicker-fuente, var(--font-body)); letter-spacing:.34em; text-transform:uppercase; color:var(--accent)}
+    .rotulo::before{content:""; width:96px; height:4px; background:var(--accent)}
+    .cab h1{margin-top:34px; font-family:var(--font-display); font-weight:var(--titulo-peso, 800); font-style:var(--titulo-estilo, normal); text-transform:var(--titulo-caja, none); font-size:var(--tit-size, 170px); line-height:1; letter-spacing:-.03em; color:var(--strong)}
+    .cab .bajada{margin-top:22px; font-size:46px; line-height:1.25; color:var(--lead)}
+    .cab .leyenda{margin-top:24px; font-size:27px; letter-spacing:.05em; color:var(--muted)}
+
+    .ruta{position:relative; flex:1; min-height:0; display:grid; grid-auto-rows:1fr; margin-top:10px}
+    /* El camino: una línea punteada que une los números */
+    .ruta::before{content:""; position:absolute; left:54px; top:70px; bottom:70px; border-left:4px dashed color-mix(in srgb, var(--accent) 55%, transparent)}
+    .est{position:relative; display:grid; grid-template-columns:112px 700px 1fr; gap:50px; align-items:center; padding:8px 0; border-bottom:1px solid var(--line); min-height:0}
+    .est:last-child{border-bottom:none}
+    .nodo{position:relative; z-index:1; width:112px; height:112px; border-radius:50%; background:var(--bg); border:4px solid var(--accent); display:grid; place-items:center}
+    .nodo b{font:var(--titulo-peso, 800) 50px/1 var(--font-display); color:var(--accent); font-variant-numeric:lining-nums}
+    .tit small{display:block; margin-bottom:8px; font:600 25px var(--kicker-fuente, var(--font-body)); letter-spacing:.2em; text-transform:uppercase; color:var(--muted)}
+    .tit h2{font-family:var(--font-display); font-weight:var(--titulo-peso, 800); font-style:var(--titulo-estilo, normal); font-size:var(--est-size, 62px); line-height:1.08; letter-spacing:-.02em; color:var(--strong)}
+    .txt{display:grid; gap:8px; font-size:var(--dice-size, 30px); line-height:1.25; min-width:0}
+    .txt p{display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden}
+    .txt .dice{-webkit-line-clamp:3}
+    .dice{color:var(--text); font-style:italic}
+    .pasa{color:var(--muted); font-size:.84em}
+    /* Sin el libreto, lo que pasa en escena es lo único del renglón: más grande y con más líneas */
+    .txt .pasa:only-child{font-size:1.08em; color:var(--lead); -webkit-line-clamp:3}
+    .tag{display:inline-block; margin-right:14px; font:700 .6em var(--font-body); font-style:normal; letter-spacing:.16em; text-transform:uppercase; color:var(--accent)}
+    .fl{margin:0 .35em; color:var(--accent); font-style:normal; font-weight:700}
+
+    .anexo{margin-top:14px; padding-top:34px; border-top:2px solid var(--line)}
+    .anexo h3{font:700 28px var(--kicker-fuente, var(--font-body)); letter-spacing:.3em; text-transform:uppercase; color:var(--accent)}
+    .anexo .nota{margin-top:10px; font-size:28px; line-height:1.35; color:var(--muted)}
+    .anexo ul{list-style:none; padding:0; margin-top:24px; display:flex; flex-wrap:wrap; gap:14px 16px}
+    .anexo li{border:2px solid var(--line); border-radius:calc(999px * var(--radio, 1)); padding:10px 26px; font-size:31px; color:var(--lead)}
+    .anexo li em{margin-right:12px; font-size:.7em; font-style:normal; font-weight:700; letter-spacing:.1em}
+    .pie{display:flex; justify-content:space-between; gap:60px; margin-top:34px; font-size:30px; color:var(--muted)}
+    .pie b{color:var(--text); font-weight:600}
+
+    /* ---------- Caras y hojas ----------
+       En el editor se ve una cara a la vez, o la vista «En la hoja» (cada hoja armada con sus caras: margen,
+       separación, una o dos por hoja). Al exportar o imprimir salen solo las hojas, una por página. */
+    .poster-wrap{display:none}
+    .poster-wrap.on{display:block}
+    #hojas{display:none}
+    .hoja{position:relative; flex:none; overflow:hidden; background:#fff; box-shadow:0 20px 60px rgba(0,0,0,.6)}
+    .hoja .puesto{position:absolute; transform-origin:0 0}
+    .hoja .corte{position:absolute; top:0; bottom:0; width:0; border-left:3px dashed #8d8d8d}
+    .hoja .corte.h{top:auto; bottom:auto; left:0; right:0; width:auto; height:0; border-left:0; border-top:3px dashed #8d8d8d}
+    body.vista-hoja .poster-wrap{display:none !important}
+    body.vista-hoja #hojas{display:flex; gap:60px; align-items:flex-start}
+    body.export .poster-wrap{display:none !important}
+    body.export #hojas{display:block}
+    body.export .hoja{box-shadow:none; break-after:page; page-break-after:always}
+    body.export .hoja:last-child{break-after:auto; page-break-after:auto}
+    @media print{ .poster-wrap{display:none !important} #hojas{display:block !important} .hoja{box-shadow:none; break-after:page; page-break-after:always} .hoja:last-child{break-after:auto; page-break-after:auto} }
+    .carasbar[hidden]{display:none}
+    .carasbar{position:fixed; top:12px; left:16px; z-index:6; display:flex; gap:4px; padding:4px; border-radius:999px; background:rgba(22,22,26,.92); border:1px solid var(--ui-line)}
+    .carasbar button{background:none; border:none; color:#b7b1a7; padding:7px 18px; border-radius:999px; cursor:pointer; font:inherit; font-weight:600; font-size:13px}
+    .carasbar button.on{background:#d7a54a; color:#111}
+    .carasbar .info{align-self:center; padding:0 14px 0 8px; font-size:12px; color:#b7b1a7; white-space:nowrap}
+
+    /* ---------- Exportación: solo el póster, sin interfaz ---------- */
+    body.export{background:#000}
+    body.export .ui, body.export .pins{display:none !important}
+    body.export .layout{display:block; height:auto}
+    body.export .viewport{padding:0; height:auto; overflow:visible; display:block}
+    body.export .scaler{transform:none !important; width:auto !important; height:auto !important}
+    body.export .poster-wrap{box-shadow:none}
+    @media print{ .ui, .pins{display:none !important} .viewport{padding:0 !important} .scaler{transform:none !important} }
+
+    /* ---------- Interfaz de revisión ---------- */
+    .layout{display:grid; grid-template-columns:1fr 380px; height:100vh}
+    .viewport{overflow:auto; padding:28px; display:flex; justify-content:center; align-items:flex-start}
+    .scaler{transform-origin:top left; position:relative}
+    .poster-wrap{position:relative; box-shadow:0 20px 60px rgba(0,0,0,.6)}
+    body.obs-mode .poster-wrap{cursor:crosshair}
+    .panel{border-left:1px solid var(--ui-line); background:var(--ui); display:flex; flex-direction:column; min-height:0; font-size:14px}
+    .tabs{display:flex; border-bottom:1px solid var(--ui-line)}
+    .tabs button{flex:1; background:none; border:none; border-bottom:2px solid transparent; color:#b7b1a7; padding:12px; cursor:pointer; font:inherit; font-weight:600}
+    .tabs button.on{color:#fff; border-bottom-color:#d7a54a}
+    .tab{display:none; flex:1; flex-direction:column; min-height:0}
+    .tab.on{display:flex}
+    .form{flex:1; overflow:auto; padding:6px 18px 18px}
+    .tools{display:flex; flex-wrap:wrap; gap:8px; padding:12px 18px; border-top:1px solid var(--ui-line)}
+    .foot, .hint{padding:12px 18px; color:#b7b1a7; font-size:12px; line-height:1.5; margin:0}
+    .list{flex:1; overflow:auto; padding:12px 18px; display:grid; gap:10px; align-content:start}
+    .item{border:1px solid var(--ui-line); border-radius:10px; padding:10px 12px; background:#1b1b20}
+    .item .meta{display:flex; justify-content:space-between; color:#b7b1a7; font-size:12px; margin-bottom:6px}
+    .item .num{color:#d7a54a; font-weight:700}
+    .item textarea{width:100%; min-height:64px; resize:vertical; background:#111114; color:#f4f1eb; border:1px solid var(--ui-line); border-radius:6px; padding:8px; font:inherit}
+    .item .del{background:none; border:none; color:#b7b1a7; cursor:pointer; font-size:12px; padding:0}
+    .item.active{border-color:#d7a54a}
+    .pins{position:absolute; inset:0; pointer-events:none}
+    .pin{position:absolute; width:64px; height:64px; margin:-32px 0 0 -32px; border-radius:50%; background:#e5484d; color:#fff; font:800 30px/64px system-ui,sans-serif; text-align:center; box-shadow:0 0 0 6px rgba(0,0,0,.55); pointer-events:auto; cursor:pointer}
+    .pin.active{background:#f6b40e; color:#111}
+    .pin.hecho{background:#3f8f5a; opacity:.55}
+    .item.hecho textarea{opacity:.5; text-decoration:line-through}
+    .item .meta button{background:none; border:none; color:#b7b1a7; cursor:pointer; font-size:12px; padding:0 0 0 10px}
+    .item .meta button:hover{color:#f4f1eb}
+  </style>
+  <style id="carasCss"></style>
+  <style id="paginaCss"></style>
+</head>
+<body>
+  <div class="layout">
+    <div class="carasbar ui" id="carasBar" hidden></div>
+    <div class="viewport" id="viewport">
+      <div class="scaler" id="scaler">
+        <div class="poster-wrap on" id="posterWrap" data-cara-wrap="frente">
+          <div class="poster" id="poster" data-cara="frente">
+            <header class="cab" data-part="Encabezado">
+              <div class="rotulo" id="rotulo"></div>
+              <h1 id="titulo"></h1>
+              <p class="bajada" id="bajada"></p>
+              <p class="leyenda" id="leyenda"></p>
+            </header>
+            <section class="ruta" id="ruta" data-part="La ruta"></section>
+            <section class="anexo" id="anexo" data-part="Anexo">
+              <h3 id="anexoTitulo"></h3><p class="nota" id="anexoNota"></p><ul id="anexoLista"></ul>
+            </section>
+            <footer class="pie" data-part="Pie"><span id="equipo"></span><span id="contexto"></span></footer>
+          </div>
+          <div class="pins" id="pins"></div>
+        </div>
+        <div id="hojas"></div>
+      </div>
+    </div>
+
+    <aside class="ui panel">
+      <div class="tabs"><button class="on" data-tab="params">Parámetros</button><button data-tab="obs">Observaciones</button></div>
+      <section class="tab on" id="tab-params">
+        <div class="form" id="form"></div>
+        <div class="tools">
+          <button class="tr-btn" id="btnExportCmd">Copiar comando de exportación</button>
+          <button class="tr-btn" id="btnJson">Copiar JSON</button>
+          <button class="tr-btn" id="btnReset">Restaurar</button>
+          <button class="tr-btn" id="btnFit">Ajustar</button>
+          <button class="tr-btn" id="btnFull">100 %</button>
+        </div>
+        <p class="foot">Los cambios se guardan solos (en <code>proyecto/estado/</code> con <code>tramoya abrir</code>; si no, en este navegador). Para el PNG y el PDF: <code>tramoya poster --pagina ruta</code> usa lo guardado; sin servidor, copiá el comando de exportación, que lleva los parámetros adentro.</p>
+      </section>
+      <section class="tab" id="tab-obs">
+        <p class="hint">Activá <b>Marcar</b> (tecla O) y hacé clic sobre el póster donde quieras un cambio. Escribí la corrección y, al terminar, <b>Copiar para el chat</b>.</p>
+        <div class="tools">
+          <button class="tr-btn" id="btnObs">Marcar (O)</button>
+          <button class="tr-btn" id="btnCopy">Copiar para el chat</button>
+          <button class="tr-btn" id="btnClear">Borrar todas</button>
+        </div>
+        <div class="list" id="list"></div>
+      </section>
+    </aside>
+  </div>
+
+  <script src="../nucleo/marca.js"></script>
+  <script src="../nucleo/panel.js"></script>
+  <script src="../proyecto/manifiesto.js"></script>
+  <script src="../proyecto/glifos.js"></script>
+  <script src="../proyecto/escenas.js"></script>
+  <script src="../proyecto/tipos.js"></script>
+  <script src="ruta.js"></script>
+</body>
+</html>

@@ -193,7 +193,7 @@
     actual[p.sub] = txt; h.corte = true; silencioHasta = Date.now() + 1500;
     if (v == null) await borrar(p.sub, { sinHistorial: true }); else guardar(p.sub, v, { sinHistorial: true });
     persistir(); indicador();
-    const nombre = { motion: 'la presentación', reel: 'el reel', landing: 'la landing', 'poster-cfg': 'el póster', 'poster-obs': 'las observaciones', 'marca-editor': 'la marca', 'marca-variantes': 'las variantes de la marca', pedidos: 'los pedidos' }[p.sub] || p.sub;
+    const nombre = { motion: 'la presentación', reel: 'el reel', landing: 'la landing', 'poster-cfg': 'el póster', 'poster-obs': 'las observaciones', 'ruta-cfg': 'la hoja de ruta', 'ruta-obs': 'las observaciones de la hoja de ruta', 'marca-editor': 'la marca', 'marca-variantes': 'las variantes de la marca', pedidos: 'los pedidos' }[p.sub] || p.sub;
     const fn = restauradores[p.sub];
     if (fn) { fn(v == null ? null : clone(v)); toast(`${msg}: ${nombre}`); return; }
     try { sessionStorage.setItem('tr-aviso', `${msg}: ${nombre}`); } catch (e) {}

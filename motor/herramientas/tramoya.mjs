@@ -30,7 +30,7 @@ const PLANTILLA = SKILL ? join(SKILL, 'plantilla', 'proyecto') : join(RAIZ_AQUI,
 // Lanzadores de doble clic (macOS, Windows, Linux): abren el estudio en la carpeta del proyecto
 const LANZADORES = ['Abrir estudio.command', 'Abrir estudio.bat', 'abrir-estudio.sh'];
 // Lo que es motor (se copia y se actualiza); todo lo demás del proyecto es del usuario
-const PARTES_MOTOR = ['LICENCIA.md', 'index.html', 'tablero', 'nucleo', 'estilos', 'motion', 'reel', 'poster', 'landing', 'marca', 'render', 'herramientas', 'package.json', 'package-lock.json', ...LANZADORES];
+const PARTES_MOTOR = ['LICENCIA.md', 'index.html', 'exponer.html', 'tablero', 'nucleo', 'estilos', 'motion', 'reel', 'poster', 'landing', 'marca', 'render', 'herramientas', 'package.json', 'package-lock.json', ...LANZADORES];
 
 // ---------- Utilidades ----------
 const c = process.stdout.isTTY ? { b: (s) => `\x1b[1m${s}\x1b[0m`, g: (s) => `\x1b[32m${s}\x1b[0m`, r: (s) => `\x1b[31m${s}\x1b[0m`, d: (s) => `\x1b[2m${s}\x1b[0m`, y: (s) => `\x1b[33m${s}\x1b[0m` } : { b: String, g: String, r: String, d: String, y: String };
@@ -299,7 +299,7 @@ function pendientesDe(P, E = leerEstado(P, false), { todas = false } = {}) {
         out.push({ pieza: 'motion', escena: i + 1, paso: x.paso, elemento: x.elemento, cita: x.cita, x: x.x, y: x.y, texto: x.texto, hecho: !!x.hecho, fecha: x.fecha || x.creada, abrir: `motion/index.html?escena=${i + 1}&paso=${x.paso || 1}` })));
     }
     if (sub === 'pedidos' && Array.isArray(v)) v.filter(ok).forEach((o) => out.push({ pieza: 'pedido', tipo: o.tipo, texto: o.texto, links: o.links, imagenes: o.imagenes, id: o.id, fecha: o.fecha, hecho: !!o.hecho }));
-    if (/-obs$/.test(sub) && Array.isArray(v)) v.filter(ok).forEach((o) => out.push({ pieza: sub.replace(/-obs$/, ''), id: o.id, parte: o.part, x: o.x != null ? Math.round(o.x * 100) + '%' : undefined, y: o.y != null ? Math.round(o.y * 100) + '%' : undefined, texto: o.text, hecho: !!o.hecho, abrir: `${sub.replace(/-obs$/, '')}/index.html` }));
+    if (/-obs$/.test(sub) && Array.isArray(v)) v.filter(ok).forEach((o) => out.push({ pieza: sub.replace(/-obs$/, ''), id: o.id, parte: o.part, x: o.x != null ? Math.round(o.x * 100) + '%' : undefined, y: o.y != null ? Math.round(o.y * 100) + '%' : undefined, texto: o.text, hecho: !!o.hecho, abrir: sub === 'ruta-obs' ? 'poster/ruta.html' : `${sub.replace(/-obs$/, '')}/index.html` }));
   }
   return out;
 }
@@ -653,7 +653,7 @@ ${c.b('Proyecto')}
 ${c.b('Salidas')}  ${c.d('(necesitan playwright-core y Chrome; video también ffmpeg)')}
   revisar <motion|reel|poster|landing|marca|x.html> [...]        un PNG por punto clave + errores de consola
   video <motion|reel|x.html> [--fps 30] [--salida x.mp4] [...]   MP4
-  poster [--formato A3] [--dpi 300]                              PNG 300 dpi y PDF
+  poster [--formato A3] [--dpi 300] [--pagina ruta]              PNG 300 dpi y PDF (ruta = la hoja de ruta; una cara = un PNG y una página)
   marca [--png]                                                  SVG/PNG de cada variante del logo
 ${c.b('Llevar')}
   empaquetar [-o archivo.zip] [--solo-proyecto]                 un zip con todo (o solo proyecto/)

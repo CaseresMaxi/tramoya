@@ -118,6 +118,10 @@
   const TRANS = ['franjas', 'camara', 'morph', 'fundido', 'corte'];
   const CAMARA = (tr) => tr && (tr.tipo === 'franjas' || tr.tipo === 'camara');
   let S = [], TR = [], KEYS = [], PAIRS = [], TOTAL = 0, PARTITURA = [];
+  // Puntos clave: cada paso de cada escena (KEYS_ALL). Con `?pausas=escena` (o la tecla S) solo queda el
+  // último de cada escena: el avance corre la escena entera, sin pausas en el medio, y se frena al final
+  let KEYS_ALL = [], porEscena = q.get('pausas') === 'escena';
+  const claves = () => (porEscena ? KEYS_ALL.filter((k) => k.s === S[k.i].steps - 1) : KEYS_ALL);
 
   // Parte el texto en palabras (o letras), cada una con su máscara, sin tocar el marcado
   function splitText(el, letters) {
@@ -287,6 +291,7 @@
       cur = base;
     });
     S.forEach((sc, i) => { sc.tOut = i < S.length - 1 ? TR[i].start + TR[i].D : Infinity; });
+    KEYS_ALL = KEYS; KEYS = claves();
     TOTAL = cur;
     worldPos.length = 0;
     measure();
@@ -633,7 +638,7 @@
   function replay() {
     const i = KEYS.findIndex((k) => k.t >= T - EPS), k = KEYS[Math.max(0, i)];
     const sc = S[k.i];
-    T = k.s === 0 ? sc.tIn : sc.stepStart[k.s]; target = k.t;
+    T = k.s === 0 || porEscena ? sc.tIn : sc.stepStart[k.s]; target = k.t;
   }
   // Cuánto se queda en cada punto clave en modo automático (y en el video renderizado)
   function holdFor(k) {
@@ -746,6 +751,12 @@
 
   // ---------- Controles ----------
   function toggleAuto(v = !auto) { auto = v; holdSince = null; $('btnAuto').classList.toggle('on', auto); U.toast(auto ? 'Automático: sigue solo después de cada punto clave' : 'Modo presentador: avanzás vos'); if (auto && keyAt(T) === undefined && T === target) next(); }
+  // Una pausa por escena ↔ una por paso: rearma los puntos clave y la barra sin tocar la posición
+  function togglePorEscena(v = !porEscena) {
+    porEscena = v; KEYS = claves(); buildPlan(); if (!RENDER) buildTimeline();
+    $('btnEscena').classList.toggle('on', porEscena);
+    U.toast(porEscena ? 'Una pausa por escena: cada avance corre la escena entera' : 'Una pausa por paso: cada avance suma un paso');
+  }
   function togglePause(v = !paused) { paused = v; $('btnPause').textContent = paused ? '▶' : '❚❚'; }
   function cycleTheme() {
     const temas = Object.keys(P.temas);
@@ -756,7 +767,7 @@
     next: () => next(), prev: () => prev(), replay,
     first: () => { T = 0; target = KEYS[0]?.t || 0; },
     last: () => seek(TOTAL),
-    pause: () => togglePause(), auto: () => toggleAuto(), theme: cycleTheme,
+    pause: () => togglePause(), auto: () => toggleAuto(), escena: () => togglePorEscena(), theme: cycleTheme,
     notes: () => { $('notes').classList.toggle('on'); $('btnNotes').classList.toggle('on'); },
     help: () => $('help').classList.toggle('on'),
     full: () => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen()),
@@ -783,6 +794,7 @@
     else if (/^[pP]$/.test(k)) togglePause();
     else if (/^[aA]$/.test(k)) toggleAuto();
     else if (/^[rR]$/.test(k)) replay();
+    else if (/^[sS]$/.test(k)) togglePorEscena();
     else if (/^[nN]$/.test(k)) ACTIONS.notes();
     else if (/^[tT]$/.test(k)) cycleTheme();
     else if (/^[mM]$/.test(k)) { doc.estilo.desenfoque = !doc.estilo.desenfoque; save(); U.toast('Desenfoque de movimiento: ' + (doc.estilo.desenfoque ? 'sí' : 'no')); }
@@ -1100,7 +1112,7 @@
     if (!editorOpen) return;
     const d = S[sceneAt(T)]?.d;
     // Destino de las imágenes: el elemento elegido, o la imagen de la escena actual
-    const imgKey = (s) => (TIPOS[s.tipo]?.campos || []).find(([, t]) => t === 'image')?.[0];
+    const imgKey = (s) => camposDe(s).find(([, t]) => t === 'image')?.[0];
     const dest = selF && campoDe(selF.d, selF.f)[1] === 'image' ? [selF.d, selF.f] : d && imgKey(d) ? [d, imgKey(d)] : null;
     const ti = $('thumbsImg'); ti.innerHTML = '';
     ti.appendChild(imageGrid(dest ? dest[0][dest[1]] : '', (u) => {
@@ -1296,9 +1308,11 @@
 
   // ---------- Arranque ----------
   // ?escena=4&paso=2 (desde 1) abre ese punto clave · ?t=12.5 congela ese instante · &tema= · &ui=0
+  // ?pausas=escena: una sola pausa por escena, al final (sin las de cada paso; exponer.html la abre así)
   // ?render: sin interfaz y sin reproducción; render/video.mjs maneja el tiempo con window.seek(v)
   if (q.get('tema') && P.temas[q.get('tema')]) doc.estilo.tema = q.get('tema');
   if (q.get('ui') === '0') $('controls').style.display = 'none';
+  $('btnEscena').classList.toggle('on', porEscena);
   stage.dataset.theme = doc.estilo.tema;
   grano();
   fit();

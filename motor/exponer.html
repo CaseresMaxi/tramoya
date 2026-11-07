@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Exponer</title>
+  <!-- La presentación para exponer: se abre con doble clic y cada avance (→, Espacio o clic) corre la escena
+       entera, sin las pausas de cada paso; se frena al final de cada una. F pantalla completa · N notas ·
+       S vuelve a las pausas por paso. Es la misma presentación (motion/index.html) con ?pausas=escena. -->
+  <script>location.replace('motion/index.html?pausas=escena' + (location.search ? '&' + location.search.slice(1) : '') + location.hash);</script>
+  <noscript><meta http-equiv="refresh" content="0; url=motion/index.html?pausas=escena" /></noscript>
+</head>
+<body><a href="motion/index.html?pausas=escena">Abrir la presentación (una pausa por escena)</a></body>
+</html>

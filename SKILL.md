@@ -32,10 +32,14 @@ node herramientas/tramoya.mjs <comando>              # desde adentro de un proye
 | `abrir [pieza]` | Un solo proyecto en `/` (mismo servidor que el estudio) |
 | `estado` (`--json`) | Qué editó el usuario, sus **pedidos** desde el tablero y las **correcciones** pendientes |
 | `revisar <pieza>` | Un PNG por punto clave en `salida/revision/<pieza>/` + errores de consola (código 1 si hay) |
-| `video <motion\|reel>` · `poster` · `marca` | MP4 · PNG 300 dpi + PDF · SVG/PNG del logo, en `salida/` (marca: `proyecto/assets/logo/`) |
+| `video <motion\|reel>` · `poster [--pagina ruta]` · `marca` | MP4 · PNG 300 dpi + PDF (`--pagina ruta`: la hoja de ruta de la presentación) · SVG/PNG del logo, en `salida/` (marca: `proyecto/assets/logo/`) |
 | `historial [pieza] [--guardar]` · `restaurar <pieza> [n]` | Versiones anteriores de lo editado (`proyecto/estado/.historial/`) · volver a una (la actual queda guardada) |
 | `empaquetar` · `importar <zip>` · `actualizar` | Llevar el trabajo (zip) · traerlo · ponerle el motor nuevo |
 | `doctor` | Revisa Node, Chrome, ffmpeg y playwright-core |
+
+Para **exponer** la presentación sin las pausas de cada paso (cada avance corre la escena entera y frena
+al final), abrí `exponer.html` en la raíz del proyecto (doble clic) o `motion/index.html?pausas=escena`; la
+tecla S lo alterna en vivo.
 
 Todos aceptan `--en <carpeta>`; si no, buscan el proyecto desde el directorio actual
 o en `./tramoya`.
@@ -129,7 +133,7 @@ links, capturas), **creá un estilo propio** a partir de eso.
 ## La regla del estado (importante)
 
 Lo editado en el navegador vive en `proyecto/estado/<pieza>.json` (`motion`, `reel`,
-`landing`, `poster-cfg`, `poster-obs`, `marca-editor`, `marca-variantes`) con la forma
+`landing`, `poster-cfg`, `poster-obs`, `ruta-cfg`, `ruta-obs`, `marca-editor`, `marca-variantes`) con la forma
 `{ "rev": …, "v": … }`, y **manda sobre los datos de `proyecto/*.js`**.
 
 - Si existe `estado/motion.json`, cambiar `escenas.js` **no se ve**. Editá

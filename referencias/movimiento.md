@@ -134,7 +134,9 @@ la del estilo → lo que trae el tipo.
 
 **Una escena a medida** (`tipo: 'libre'`): el HTML lo escribís vos, con los mismos
 atributos. `{{kicker}}` y `{{titulo}}` ponen los de siempre (y viajan); `{{campo}}` pone
-ese campo de la escena (se edita con un clic). `css` va con la escena.
+ese campo de la escena (se edita con un clic); `{{img:campo}}` pone la imagen de ese campo
+(`<img src="{{img:foto}}">`, con `data-f="foto"` en el elemento) para poder cambiarla desde el
+editor. `css` va con la escena.
 
 ```js
 { tipo: 'libre', kicker: 'Antes y ahora', titulo: 'Lo que *cambió*.', antes: '3 días', ahora: '20 minutos',

@@ -21,6 +21,7 @@
 | Ctrl+Z · Ctrl+Shift+Z | Deshacer · rehacer lo editado (fuera de un campo de texto; también ↶ ↷ abajo a la izquierda) |
 | C | Marcar una corrección (Esc cancela) |
 | F | Pantalla completa |
+| S | Una pausa por escena (sin las de cada paso) ↔ una por paso |
 | H | Ayuda |
 
 La barra de abajo se puede arrastrar: recorre el video cuadro a cuadro.
@@ -34,6 +35,7 @@ La barra de abajo se puede arrastrar: recorre el video cuadro a cuadro.
 | `&tema=papel` | Fuerza un tema |
 | `&estilo=cine` | Previsualiza un estilo de la galería (`proyecto:<id>` para uno propio) sin elegirlo |
 | `&ui=0` | Sin controles (para capturas) |
+| `?pausas=escena` | Una sola pausa por escena, al final: cada avance corre la escena entera (entrada y todos sus pasos) sin frenar en el medio. La tecla **S** (o «Por escena») lo alterna en vivo. `exponer.html`, en la raíz del proyecto, la abre así con doble clic |
 | `?render` | Modo render: sin interfaz, sin reproducción; usa lo guardado en archivos (`proyecto/estado/`) pero no el borrador del navegador; expone el contrato de render |
 | `&pausaMax=3` | En modo render, ninguna pausa dura más de 3 s |
 
@@ -57,6 +59,8 @@ Campos comunes:
 | `ocultar` | Lista de campos (`data-f`) que no se muestran |
 | `cromo` | `false` para ocultar encabezado y pie en esta escena |
 | `activa` | `false` para saltearla |
+| `ruta` | Nombre del momento en la hoja de ruta (`poster/ruta.html`), si el título no alcanza o se repite |
+| `anexo` | `true`: escena de apoyo para las preguntas; la hoja de ruta la lista aparte |
 | `ancla` | Nombre para saltar a esta escena: un elemento con `data-ir="ancla"` (o un número) salta ahí al hacer clic, sin recargar ni salir de pantalla completa; también `MOTION.ir('ancla', paso?)`. Sin paso, cae en el último punto clave |
 | `correcciones` | Las agrega el editor |
 
@@ -128,6 +132,9 @@ se cruzan enteras; en un `corte` no sale ni viaja nada.
 `tipo: 'libre'` con `html` y `css`: el HTML de la escena escrito a medida, con los mismos
 atributos. `{{kicker}}` y `{{titulo}}` ponen los de siempre (viajan entre escenas);
 `{{campo}}` pone ese campo de la escena como texto (con `*acento*`) y aparece en el editor.
+`{{img:campo}}` pone la dirección de la imagen de ese campo (`<img src="{{img:foto}}">`) y el
+editor deja cambiarla: con `data-f="foto"` en el elemento, un clic la elige (si no, queda fija en el HTML
+y no se puede cambiar desde el editor).
 Ejemplo en `referencias/movimiento.md` § 5.
 
 ## Contrato de render

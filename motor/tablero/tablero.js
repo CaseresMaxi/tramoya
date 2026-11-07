@@ -46,13 +46,16 @@
   const PIEZAS = [
     { id: 'motion', nombre: 'Presentación', ruta: 'motion/index.html', editor: 'motion/index.html', w: 1920, h: 1080, estado: ['motion'],
       desc: 'Línea de tiempo con puntos clave, cámara y morph entre escenas. Se presenta como un video y se exporta a MP4.',
-      teclas: '<kbd>E</kbd> abre el editor · <kbd>C</kbd> marca una corrección · <kbd>→</kbd> avanza',
-      mini: () => (SRV ? '?render' : '?ui=0&escena=1'), t: (w) => w.CLAVES?.[0]?.v ?? 0 },
+      teclas: '<kbd>E</kbd> abre el editor · <kbd>C</kbd> marca una corrección · <kbd>→</kbd> avanza · <kbd>S</kbd> una pausa por escena',
+      exponer: 'exponer.html', mini: () => (SRV ? '?render' : '?ui=0&escena=1'), t: (w) => w.CLAVES?.[0]?.v ?? 0 },
     { id: 'reel', nombre: 'Reel', ruta: 'reel/index.html', editor: 'reel/index.html?editor', w: 1920, h: 1080, estado: ['reel'],
       desc: 'Pieza corta a tempo, con música generada en código. Exportable a MP4.',
       teclas: '<kbd>E</kbd> abre la línea de tiempo editable', mini: () => '?render', t: (w) => (w.DURACION || 0) * 0.42 },
     { id: 'poster', nombre: 'Póster', ruta: 'poster/index.html', editor: 'poster/index.html', w: 2245, h: 3179, arriba: true, estado: ['poster-cfg', 'poster-obs'],
       desc: 'A1 (o cualquier A) con panel de parámetros. PNG a 300 dpi y PDF vectorial.',
+      teclas: 'Panel de parámetros a la derecha · <kbd>O</kbd> marca observaciones', mini: () => (SRV ? '?render&export' : '?export') },
+    { id: 'ruta', nombre: 'Hoja de ruta', ruta: 'poster/ruta.html', editor: 'poster/ruta.html', w: 2245, h: 3179, arriba: true, estado: ['ruta-cfg', 'ruta-obs'],
+      desc: 'La presentación momento a momento (qué se dice y qué pasa en cada escena), armada con las escenas y sus notas. PNG y PDF.',
       teclas: 'Panel de parámetros a la derecha · <kbd>O</kbd> marca observaciones', mini: () => (SRV ? '?render&export' : '?export') },
     { id: 'landing', nombre: 'Landing', ruta: 'landing/index.html', editor: 'landing/index.html?editar', w: 1440, h: 900, arriba: true, estado: ['landing'],
       desc: 'Una página con los mismos textos, temas y marca. Se descarga como un único .html.',
@@ -109,7 +112,7 @@
           <div class="tit"><b>${esc(p.nombre)}</b>${editada(p) ? '<span class="chip acento" title="Tiene cambios hechos en su editor (proyecto/estado/)">editada</span>' : ''}</div>
           <p>${p.desc}</p>
           <p class="nota">${p.teclas}</p>
-          <div class="acc"><a class="btn pri" href="${p.ruta}">Abrir</a>${p.editor !== p.ruta ? `<a class="btn" href="${p.editor}">Abrir el editor</a>` : ''}<a class="btn" href="${p.ruta}" target="_blank" rel="noopener">Pestaña nueva</a></div>
+          <div class="acc"><a class="btn pri" href="${p.ruta}">Abrir</a>${p.editor !== p.ruta ? `<a class="btn" href="${p.editor}">Abrir el editor</a>` : ''}${p.exponer ? `<a class="btn" href="${p.exponer}" title="La presentación sin las pausas de cada paso: cada avance corre la escena entera">Exponer</a>` : ''}<a class="btn" href="${p.ruta}" target="_blank" rel="noopener">Pestaña nueva</a></div>
         </div></article>`);
       grid.appendChild(el);
       miniatura($('.mini', el), p);
@@ -181,6 +184,7 @@
     const m = U.leer('motion');
     (m?.escenas || []).filter((x) => x.activa !== false).forEach((sc, i) => (sc.correcciones || []).forEach((x) => out.push({ clase: 'motion', escena: i + 1, ...x })));
     (U.leer('poster-obs', []) || []).forEach((o) => out.push({ clase: 'poster', ...o }));
+    (U.leer('ruta-obs', []) || []).forEach((o) => out.push({ clase: 'poster', pieza: 'Hoja de ruta', ...o }));
     return out;
   }
   function contar() {
@@ -266,9 +270,9 @@
         <div class="txt">${esc(x.texto || '(sin texto)')}</div>${x.cita ? `<div class="cita">«${esc(x.cita)}»</div>` : ''}
         <div class="acc"><a class="btn chico" href="motion/index.html?escena=${x.escena}&paso=${x.paso || 1}">Ver ese cuadro</a></div></div>`;
       return `<div class="item ${x.hecho ? 'hecho' : ''}">
-        <div class="linea1"><span class="chip">Póster${x.part ? ' · ' + esc(x.part) : ''}</span>${x.hecho ? '<span class="chip ok">hecha</span>' : ''}<span class="fecha">${x.x != null ? `(${Math.round(x.x * 100)}%, ${Math.round(x.y * 100)}%)` : ''}</span></div>
+        <div class="linea1"><span class="chip">${x.pieza || 'Póster'}${x.part ? ' · ' + esc(x.part) : ''}</span>${x.hecho ? '<span class="chip ok">hecha</span>' : ''}<span class="fecha">${x.x != null ? `(${Math.round(x.x * 100)}%, ${Math.round(x.y * 100)}%)` : ''}</span></div>
         <div class="txt">${esc(x.text || '(sin texto)')}</div>
-        <div class="acc"><a class="btn chico" href="poster/index.html">Abrir el póster</a></div></div>`;
+        <div class="acc"><a class="btn chico" href="${x.pieza ? 'poster/ruta.html' : 'poster/index.html'}">${x.pieza ? 'Abrir la hoja de ruta' : 'Abrir el póster'}</a></div></div>`;
     }).join('');
     $$('[data-hecho]', cont).forEach((b) => (b.onclick = () => { const l = U.leer('pedidos', []) || [], o = l.find((p) => p.id === b.dataset.hecho); if (o) { o.hecho = !o.hecho; U.guardar('pedidos', l); pintarPedidos(); contar(); } }));
     $$('[data-borrar]', cont).forEach((b) => (b.onclick = () => { if (!confirm('¿Borrar este pedido?')) return; U.guardar('pedidos', (U.leer('pedidos', []) || []).filter((p) => p.id !== b.dataset.borrar)); pintarPedidos(); contar(); }));
@@ -277,9 +281,9 @@
   // ---------- Código ----------
   let ed = null, actual = null, archivos = [], prevPieza = 'motion', prevVisible = true, guardadoRecien = 0;
   const sucio = () => !!actual && !actual.generado && ed.texto() !== actual.original;
-  const PREV = { motion: 'Presentación', reel: 'Reel', poster: 'Póster', landing: 'Landing', marca: 'Marca' };
+  const PREV = { motion: 'Presentación', reel: 'Reel', poster: 'Póster', ruta: 'Hoja de ruta', landing: 'Landing', marca: 'Marca' };
   const piezaDeArchivo = (r) => (r === 'escenas.js' || r === 'tipos.js' || r === 'estado/motion.json' ? 'motion'
-    : /^estado\/(reel|landing)\.json$/.test(r) ? r.slice(7, -5) : /^estado\/poster/.test(r) ? 'poster' : /^estado\/marca/.test(r) ? 'marca' : null);
+    : /^estado\/(reel|landing)\.json$/.test(r) ? r.slice(7, -5) : /^estado\/poster/.test(r) ? 'poster' : /^estado\/ruta/.test(r) ? 'ruta' : /^estado\/marca/.test(r) ? 'marca' : null);
   function secCodigo(s) {
     if (!SRV) { s.classList.remove('ancha'); s.innerHTML = `<div class="cab"><div><h1>Código</h1><p>El editor de los archivos de <code>proyecto/</code> (datos, guion, tipos propios, estado) necesita el servidor local.</p></div></div>${SIN_SERVIDOR()}<p class="nota">Mientras tanto podés editar <code>proyecto/proyecto.js</code> y <code>proyecto/escenas.js</code> con cualquier editor de texto.</p>`; return; }
     s.innerHTML = `
@@ -393,7 +397,7 @@
       estadoEd(); avisosEd(); $('#edEstado').textContent = 'sin guardar';
     }
   }
-  const DIM = { motion: [1920, 1080], reel: [1920, 1080], poster: [2245, 3179], landing: [1440, 900], marca: [1440, 900] };
+  const DIM = { motion: [1920, 1080], reel: [1920, 1080], poster: [2245, 3179], ruta: [2245, 3179], landing: [1440, 900], marca: [1440, 900] };
   function urlPrev() {
     const p = PIEZAS.find((x) => x.id === prevPieza);
     let q = '';
@@ -438,8 +442,8 @@
           <div class="fila"><select name="pieza"><option value="motion">Presentación</option><option value="reel">Reel</option></select><select name="calidad"><option value="final">Final (60 fps)</option><option value="rapida">Rápida (30 fps)</option></select></div>
           <div class="fila"><label class="chk">Pausa máx. en la presentación <input type="number" name="pausaMax" value="3" min="0" step="0.5" style="width:70px"> s</label></div>
           <button class="btn pri">Exportar video</button></form>
-        <form class="accion" data-cmd="poster"><b>Póster</b><p>PNG para imprimir y PDF vectorial.</p>
-          <div class="fila"><select name="formato"><option>A1</option><option>A2</option><option>A3</option><option>A4</option></select><select name="dpi"><option value="300">300 dpi</option><option value="150">150 dpi</option></select></div>
+        <form class="accion" data-cmd="poster"><b>Póster</b><p>PNG para imprimir y PDF vectorial: el póster o la hoja de ruta.</p>
+          <div class="fila"><select name="pagina"><option value="">Póster</option><option value="ruta">Hoja de ruta</option></select><select name="formato"><option>A1</option><option>A2</option><option>A3</option><option>A4</option></select><select name="dpi"><option value="300">300 dpi</option><option value="150">150 dpi</option></select></div>
           <button class="btn pri">Exportar póster</button></form>
         <form class="accion" data-cmd="marca"><b>Marca</b><p>SVG de cada variante del logo y el favicon, en <code>proyecto/assets/logo/</code>.</p>
           <div class="fila"><label class="chk"><input type="checkbox" name="png"> También PNG de 2048 px</label></div>
@@ -461,7 +465,7 @@
     const c = f.dataset.cmd, v = (n) => f.elements[n]?.value?.trim();
     if (c === 'revisar') return [v('pieza'), ...(v('query') ? ['--query', v('query')] : [])];
     if (c === 'video') return [v('pieza'), ...(v('calidad') === 'rapida' ? ['--fps', '30', '--sub', '1'] : []), ...(v('pieza') === 'motion' && v('pausaMax') ? ['--pausaMax', v('pausaMax')] : [])];
-    if (c === 'poster') return ['--formato', v('formato'), '--dpi', v('dpi')];
+    if (c === 'poster') return [...(v('pagina') ? ['--pagina', v('pagina')] : []), '--formato', v('formato'), '--dpi', v('dpi')];
     if (c === 'marca') return f.elements.png.checked ? ['--png'] : [];
     if (c === 'empaquetar') return f.elements.solo.checked ? ['--solo-proyecto'] : [];
     return [];
@@ -570,7 +574,7 @@
     $('#bExp').onclick = () => U.descargar(`${P.id}-estado.json`, JSON.stringify(U.exportarEstado(), null, 2), 'application/json');
     $('#bImp').onclick = () => $('#fImp').click();
   }
-  const NOMBRES = { motion: 'Presentación', reel: 'Reel', landing: 'Landing', 'poster-cfg': 'Póster', 'poster-obs': 'Observaciones del póster', 'marca-editor': 'Marca', 'marca-variantes': 'Variantes de la marca', pedidos: 'Pedidos al agente' };
+  const NOMBRES = { motion: 'Presentación', reel: 'Reel', landing: 'Landing', 'poster-cfg': 'Póster', 'poster-obs': 'Observaciones del póster', 'ruta-cfg': 'Hoja de ruta', 'ruta-obs': 'Observaciones de la hoja de ruta', 'marca-editor': 'Marca', 'marca-variantes': 'Variantes de la marca', pedidos: 'Pedidos al agente' };
   async function pintarHistorial() {
     const box = $('#historial'); if (!box) return;
     let H; try { H = await api('historial'); } catch (e) { box.innerHTML = `<p class="nota">${esc(e.message)}</p>`; return; }
@@ -628,7 +632,7 @@
 
   // ---------- Arranque ----------
   // Las piezas que el tablero lee (así sus cambios llegan por el canal de eventos)
-  ['pedidos', 'motion', 'poster-obs'].forEach((s) => U.leer(s));
+  ['pedidos', 'motion', 'poster-obs', 'ruta-obs'].forEach((s) => U.leer(s));
   U.servidor.then(async (ok) => {
     SRV = ok;
     const srv = $('#srv');
