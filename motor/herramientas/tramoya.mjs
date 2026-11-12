@@ -18,6 +18,7 @@ import { basename, dirname, extname, join, relative, resolve, sep } from 'node:p
 import { fileURLToPath } from 'node:url';
 import { Script } from 'node:vm';
 import { deflateRawSync, inflateRawSync } from 'node:zlib';
+import * as COMP from './composiciones.mjs';
 
 // Ruta real (si se llama por un enlace, como el bin de npm, se resuelve hasta el archivo)
 const CLI = (() => { const f = fileURLToPath(import.meta.url); try { return realpathSync(f); } catch (e) { return f; } })();
@@ -35,6 +36,7 @@ const PARTES_MOTOR = ['LICENCIA.md', 'index.html', 'exponer.html', 'tablero', 'n
 // ---------- Utilidades ----------
 const c = process.stdout.isTTY ? { b: (s) => `\x1b[1m${s}\x1b[0m`, g: (s) => `\x1b[32m${s}\x1b[0m`, r: (s) => `\x1b[31m${s}\x1b[0m`, d: (s) => `\x1b[2m${s}\x1b[0m`, y: (s) => `\x1b[33m${s}\x1b[0m` } : { b: String, g: String, r: String, d: String, y: String };
 const fallar = (msg) => { console.error(c.r('✗ ') + msg); process.exit(1); };
+const posix = (p) => p.split(sep).join('/');
 // Opciones que nunca llevan valor (así `--skill-local carpeta` no se come la carpeta)
 const BANDERAS = new Set(['skill-local', 'sin-navegador', 'forzar', 'json', 'solo-proyecto', 'copiar', 'sin-dependencias', 'png']);
 function args(argv) {
@@ -82,6 +84,8 @@ function manifiesto(P) {
     const base = join(P, 'proyecto', 'assets', carpeta);
     m[g] = existsSync(base) ? readdirSync(base).filter((n) => re.test(n) && n !== 'favicon.svg').sort().map((n) => `../proyecto/assets/${carpeta}/${n}`) : [];
   }
+  // Composiciones (formato HyperFrames): para la escena `composicion` y el tablero
+  m.composiciones = COMP.listar(P).map(({ id, archivo, ancho, alto, dur, titulo }) => ({ id, ruta: '../' + archivo, ancho, alto, dur, titulo }));
   escribirSiCambia(join(P, 'proyecto', 'manifiesto.js'), '// Generado por `tramoya manifiesto`. No editar a mano.\nwindow.MANIFIESTO = ' + JSON.stringify(m, null, 2) + ';\n');
   return m;
 }
@@ -650,6 +654,11 @@ ${c.b('Proyecto')}
   estilos · estilo <id>                                         galería de estilos · elegir uno (se copia a proyecto/estilo/)
   regenerar                                                     manifiesto de assets, galería y proyecto/estado.js
   historial [pieza] [--guardar] · restaurar <pieza> [n]         versiones anteriores de lo editado · volver a una
+${c.b('Composiciones')}  ${c.d('(HTML con el formato de HyperFrames: GSAP, CSS, Lottie, three.js…; ver referencias/composiciones.md)')}
+  composicion nueva <id> [--ancho 1080 --alto 1920 --dur 8 --fps 30] [--sin-gsap]
+  composicion importar <archivo.html|carpeta|hf:bloque> [--id x]   la trae a proyecto/composiciones/ (un bloque del catálogo de HyperFrames, por nombre)
+  composicion local <id>                                        baja a proyecto/assets/vendor/ lo que carga de internet
+  composiciones                                                 la lista (se exportan con revisar / video proyecto/composiciones/<id>.html)
 ${c.b('Salidas')}  ${c.d('(necesitan playwright-core y Chrome; video también ffmpeg)')}
   revisar <motion|reel|poster|landing|marca|x.html> [...]        un PNG por punto clave + errores de consola
   video <motion|reel|x.html> [--fps 30] [--salida x.mp4] [...]   MP4
@@ -738,6 +747,42 @@ Opción común: --en <carpeta del proyecto> (si no, se busca desde el directorio
       console.log(`\n${c.y(out.pendientes.length + ' pendiente(s): pedidos del tablero, correcciones y observaciones')}`);
       out.pendientes.forEach((p, i) => console.log(p.pieza === 'pedido' ? `  ${i + 1}. [pedido · ${p.tipo || 'general'}] ${p.texto || ''}${p.links?.length ? c.d(' · ' + p.links.join(' ')) : ''}${p.imagenes?.length ? c.d(' · imágenes: ' + p.imagenes.join(', ')) : ''}` : `  ${i + 1}. [${p.pieza}${p.escena ? ` · escena ${p.escena} paso ${p.paso ?? '?'}` : ''}${p.parte ? ` · ${p.parte}` : ''}${p.elemento ? ` · ${p.elemento}` : ''}${p.x != null ? ` · (${p.x}, ${p.y})` : ''}] ${p.texto || '(sin texto)'}${p.cita ? c.d(` «${p.cita}»`) : ''}`));
     }
+  },
+
+  // Composiciones con el formato de HyperFrames (herramientas/composiciones.mjs)
+  async composicion(A) {
+    const P = proyecto(A), [sub, arg] = A._;
+    const archivoDe = (id) => { const l = COMP.listar(P).find((x) => x.id === id || x.archivo === id); if (!l) fallar(`No hay una composición «${id}» (ver \`tramoya composiciones\`)`); return join(P, l.archivo); };
+    if (!sub || sub === 'lista') return COMANDOS.composiciones(A);
+    if (sub === 'nueva') {
+      if (!arg) fallar('Uso: tramoya composicion nueva <id> [--ancho 1920 --alto 1080 --dur 6 --fps 30] [--sin-gsap]');
+      const f = await COMP.nueva(P, arg, { ancho: A.ancho || 1920, alto: A.alto || 1080, dur: A.dur || 6, fps: A.fps || 30, gsap: !A['sin-gsap'] });
+      regenerar(P);
+      return console.log(`${c.g('✓')} ${relative(P, f)}\n  Mirala y editá sus variables: tramoya abrir ${posix(relative(P, f))}\n  Exportar: tramoya video ${posix(relative(P, f))}`);
+    }
+    if (sub === 'importar') {
+      if (!arg) fallar('Uso: tramoya composicion importar <archivo.html|carpeta|hf:bloque> [--id x]');
+      const r = await COMP.importar(P, arg, { id: A.id && A.id !== true ? String(A.id) : undefined, bajarCDN: !A['sin-bajar'] });
+      regenerar(P);
+      if (r.componente) return console.log(`${c.g('✓')} Componente en ${r.componente}: es un fragmento para pegar dentro de una composición (ver su SKILL.md o README).`);
+      console.log(`${c.g('✓')} ${r.archivo}${r.nota ? c.d('\n  ' + r.nota) : ''}`);
+      if (r.cdn.hechos.length) console.log(`  ${r.cdn.hechos.length} archivo(s) de internet bajados a proyecto/assets/vendor/ (funciona sin conexión).`);
+      if (r.cdn.fallidos.length) console.log(c.y(`  ! No pude bajar: ${r.cdn.fallidos.join(', ')} (siguen cargándose de internet).`));
+      return console.log(`  Mirala: tramoya abrir ${r.archivo}   ·   revisar: tramoya revisar ${r.archivo}   ·   en la presentación: una escena { tipo: 'composicion', composicion: '${r.id}' }`);
+    }
+    if (sub === 'local') {
+      if (!arg) fallar('Uso: tramoya composicion local <id>');
+      const f = archivoDe(arg), r = await COMP.local(P, f);
+      return console.log(`${c.g('✓')} ${r.hechos.length} bajado(s)${r.fallidos.length ? c.y(` · no pude: ${r.fallidos.join(', ')}`) : ''}`);
+    }
+    if (sub === 'conectar') { COMP.conectar(P, archivoDe(arg)); return console.log(`${c.g('✓')} Conectada a Tramoya.`); }
+    fallar(`No conozco «composicion ${sub}». Opciones: nueva, importar, local, conectar, lista`);
+  },
+  composiciones(A) {
+    const P = proyecto(A), L = COMP.listar(P);
+    if (A.json) return console.log(JSON.stringify(L, null, 2));
+    if (!L.length) return console.log('No hay composiciones. Crear una: tramoya composicion nueva <id> · traer un bloque de HyperFrames: tramoya composicion importar hf:<nombre>');
+    L.forEach((x) => console.log(`  ${c.b(x.id.padEnd(24))} ${x.ancho}×${x.alto}${x.dur ? ` · ${x.dur} s` : ''}  ${c.d(x.archivo)}${x.conectada ? '' : c.y('  (sin conectar: tramoya composicion conectar ' + x.id + ')')}`));
   },
 
   // Versiones anteriores de lo editado (proyecto/estado/.historial/)
@@ -873,6 +918,6 @@ for (const cmd of ['revisar', 'video', 'poster', 'marca']) {
 }
 
 const [cmd = 'ayuda', ...resto] = process.argv.slice(2);
-const f = COMANDOS[cmd] || COMANDOS[{ help: 'ayuda', '-h': 'ayuda', '--help': 'ayuda', new: 'nuevo', open: 'abrir', status: 'estado', pack: 'empaquetar', import: 'importar', update: 'actualizar', install: 'instalar', init: 'iniciar', start: 'iniciar', studio: 'estudio', history: 'historial', restore: 'restaurar' }[cmd]];
+const f = COMANDOS[cmd] || COMANDOS[{ help: 'ayuda', '-h': 'ayuda', '--help': 'ayuda', new: 'nuevo', open: 'abrir', status: 'estado', pack: 'empaquetar', import: 'importar', update: 'actualizar', install: 'instalar', init: 'iniciar', start: 'iniciar', studio: 'estudio', history: 'historial', restore: 'restaurar', composition: 'composicion', compositions: 'composiciones' }[cmd]];
 if (!f) { console.error(c.r(`Comando desconocido: ${cmd}`)); COMANDOS.ayuda(); process.exit(1); }
 await f(args(resto), resto);

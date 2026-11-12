@@ -668,6 +668,12 @@
       render(T, vel);
       renderPins();
       ambient();
+      // Reloj de cada escena: corre desde que aparece (también en las pausas), salvo en pausa
+      S.forEach((sc) => {
+        if (!sc.vis) { sc.rel = 0; return; }
+        if (!paused) sc.rel = (sc.rel || 0) + dt;
+        sc.tipo?.reloj?.(sc.el, sc.rel, { render: false });
+      });
       S.forEach((sc) => {
         if (!sc.vis) return;
         // En el punto clave de su escena, el video corre; al moverse, se detiene
@@ -696,6 +702,11 @@
       PLAN.push({ v0: v, v1: v + h, T0: k.t, T1: k.t, k }); v += h;
       T0 = k.t;
     });
+    // En qué momento del video aparece cada escena (para su reloj)
+    S.forEach((sc) => {
+      const seg = PLAN.find((g) => g.T1 > g.T0 && sc.tIn >= g.T0 - EPS && sc.tIn < g.T1 - EPS) || PLAN.find((g) => g.T0 >= sc.tIn - EPS);
+      sc.vIn = !seg ? 0 : seg.T1 > seg.T0 ? seg.v0 + ((sc.tIn - seg.T0) / (seg.T1 - seg.T0)) * (seg.v1 - seg.v0) : seg.v0;
+    });
   }
   function seekVideo(v) {
     const seg = PLAN.find((s) => v < s.v1) || PLAN[PLAN.length - 1];
@@ -705,6 +716,11 @@
     T = target = t; amb = v;
     render(T, sp);
     ambient();
+    // Reloj de cada escena en tiempo de video: desde que aparece. Si alguna espera (una
+    // composición que carga, un video que busca su cuadro), seek devuelve la promesa
+    const esperas = [];
+    S.forEach((sc) => { if (sc.vis && sc.tipo?.reloj) { const r = sc.tipo.reloj(sc.el, Math.max(0, v - (sc.vIn ?? 0)), { render: true }); if (r?.then) esperas.push(r); } });
+    return esperas.length ? Promise.all(esperas).then(() => true) : true;
   }
 
   // ---------- Línea de tiempo ----------
@@ -713,7 +729,7 @@
     tl.innerHTML = '<div class="fill" id="tlFill"></div>';
     S.forEach((sc, i) => {
       const a = sc.tIn, b = i < S.length - 1 ? S[i + 1].tIn : TOTAL;
-      const label = plain(sc.d.kicker || sc.d.titulo || TIPOS[sc.d.tipo]?.nombre || '');
+      const label = plain(sc.d.kicker || sc.d.titulo || sc.d.composicion || TIPOS[sc.d.tipo]?.nombre || '');
       tl.insertAdjacentHTML('beforeend', `<div class="part" style="left:${(a / TOTAL) * 100}%; width:${((b - a) / TOTAL) * 100}%"><span>${i + 1}. ${esc(label)}</span></div>`);
     });
     KEYS.forEach((k) => tl.insertAdjacentHTML('beforeend', `<i class="key" style="left:${(k.t / TOTAL) * 100}%"></i>`));
@@ -746,7 +762,7 @@
     notesFor = `${ci}.${st}`;
     const sc = S[ci], n = S[ci + 1];
     $('notes').innerHTML = `<small>Escena ${ci + 1} · paso ${st + 1} de ${sc.steps} · ${esc(TIPOS[sc.d.tipo]?.nombre || '')}</small><p>${esc(sc.d.notas || 'Sin notas.')}</p>`
-      + `<div class="next">Después: ${n ? esc(plain(n.d.kicker || n.d.titulo || '')) : '— fin —'}</div>`;
+      + `<div class="next">Después: ${n ? esc(plain(n.d.kicker || n.d.titulo || n.d.composicion || '')) : '— fin —'}</div>`;
   }
 
   // ---------- Controles ----------
@@ -862,7 +878,7 @@
       const it = document.createElement('div'), pend = (s.correcciones || []).filter((c) => !c.hecho).length;
       it.className = 'sitem' + (s === cur ? ' cur' : '') + (s.activa === false ? ' off' : '');
       it.innerHTML = `<input type="checkbox" ${s.activa !== false ? 'checked' : ''} title="Incluir">
-        <div><b>${i + 1}. ${esc(plain(s.kicker || s.titulo || s.texto || ''))}</b><small>${esc(TIPOS[s.tipo]?.nombre || s.tipo)}${pend ? ` · <span style="color:#e5484d">${pend} ${pend > 1 ? 'correcciones' : 'corrección'}</span>` : ''}</small></div>
+        <div><b>${i + 1}. ${esc(plain(s.kicker || s.titulo || s.texto || s.composicion || ''))}</b><small>${esc(TIPOS[s.tipo]?.nombre || s.tipo)}${pend ? ` · <span style="color:#e5484d">${pend} ${pend > 1 ? 'correcciones' : 'corrección'}</span>` : ''}</small></div>
         <div class="acts"><button data-a="up" title="Subir">↑</button><button data-a="down" title="Bajar">↓</button><button data-a="dup" title="Duplicar">⧉</button><button data-a="del" title="Borrar">✕</button></div>`;
       it.querySelector('input').onclick = (e) => { e.stopPropagation(); s.activa = e.target.checked; save(); rebuild(); };
       it.querySelectorAll('[data-a]').forEach((b) => b.onclick = (e) => {

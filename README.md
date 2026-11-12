@@ -8,7 +8,11 @@ todas las piezas de un proyecto a partir de los mismos datos:
 - un **reel** a tempo con música generada en código, exportable a MP4;
 - un **póster** A1–A4 a 300 dpi y PDF vectorial;
 - una **landing** de una página, que se descarga como un único `.html`;
-- la **marca**: logo paramétrico con variantes, en SVG y PNG.
+- la **marca**: logo paramétrico con variantes, en SVG y PNG;
+- **composiciones** libres con el formato de [HyperFrames](https://github.com/heygen-com/hyperframes)
+  (GSAP, CSS, Lottie, three.js, d3, video y audio), en cualquier tamaño: se traen del
+  catálogo de HyperFrames con un comando, se exportan a MP4 y entran a la presentación
+  como una escena más.
 
 Cada pieza **abre con su editor** en el navegador: la presentación (escenas, textos,
 imágenes, estilo, el movimiento de cada elemento, correcciones sobre un punto), el reel (línea de tiempo con partes
@@ -117,10 +121,11 @@ node herramientas/tramoya.mjs empaquetar        # → mi-proyecto.zip, se abre e
 | `abrir [pieza]` | Un solo proyecto en el navegador; los editores guardan en `proyecto/estado/` y las páginas se recargan si cambian los archivos |
 | `estado [--json]` | Qué se editó, los pedidos al agente y las correcciones pendientes |
 | `revisar <pieza>` | Un PNG por punto clave y los errores de consola |
-| `video <motion\|reel>` · `poster [--pagina ruta]` · `marca` | MP4 · PNG + PDF (la hoja de ruta, de una o dos caras, con las copias por hoja que se pidan) · SVG/PNG del logo |
+| `video <motion\|reel\|x.html> [--hilos N]` · `poster [--pagina ruta]` · `marca` | MP4 (en varios Chrome a la vez) · PNG + PDF (la hoja de ruta, de una o dos caras, con las copias por hoja que se pidan) · SVG/PNG del logo |
 | `estilos` · `estilo <id>` | La galería de estilos · elegir uno |
 | `empaquetar [--solo-proyecto]` · `importar <zip>` | Llevar y traer proyectos |
 | `historial` · `restaurar <pieza> [n]` | Versiones anteriores de lo editado · volver a una |
+| `composicion nueva <id>` · `composicion importar <x.html\|carpeta\|hf:bloque>` · `composiciones` | Composiciones (formato HyperFrames): crear, traer, listar; se exportan con `video proyecto/composiciones/<id>.html` |
 | `actualizar` | Le pone a un proyecto el motor de la versión instalada |
 | `regenerar` · `manifiesto` | `proyecto/estado.js` y la lista de assets |
 | `instalar` · `doctor` | Instalar la skill · revisar dependencias |
@@ -133,7 +138,7 @@ node herramientas/tramoya.mjs empaquetar        # → mi-proyecto.zip, se abre e
 | `scripts/tramoya.mjs` | El CLI (entrada de la skill; `bin` del `package.json`) |
 | `motor/` | El motor que se copia a cada proyecto: `tablero/` (y `index.html`), `nucleo/`, `motion/`, `reel/`, `poster/`, `landing/`, `marca/`, `render/`, `herramientas/` (CLI, servidor, inicio del estudio), lanzadores |
 | `plantilla/proyecto/` | El proyecto de ejemplo (Tramoya contándose a sí misma) |
-| `referencias/` | [movimiento](referencias/movimiento.md), [motion](referencias/motion.md), [otras piezas](referencias/piezas.md), [estilos](referencias/estilos.md), [aprendizajes](referencias/aprendizajes.md) |
+| `referencias/` | [movimiento](referencias/movimiento.md), [composiciones](referencias/composiciones.md), [motion](referencias/motion.md), [otras piezas](referencias/piezas.md), [estilos](referencias/estilos.md), [aprendizajes](referencias/aprendizajes.md) |
 | `instalar.sh` | Instalador |
 
 Un proyecto generado tiene esta forma:
@@ -152,7 +157,8 @@ tramoya/
 
 - **Todo es una función del tiempo.** Cada cuadro sale de `seek(t)`: se puede pausar,
   rebobinar, abrir un instante por URL y renderizar a video con el mismo código que se
-  ve en el navegador.
+  ve en el navegador, en varios Chrome a la vez. `revisar` comprueba que un instante dé
+  siempre el mismo cuadro.
 - **Los datos van aparte.** El motor no sabe de qué trata el proyecto; lo propio va en
   `proyecto/`.
 - **La forma sale del contenido.** Los tipos de escena son formas disponibles, no un
@@ -175,6 +181,9 @@ Más en [referencias/aprendizajes.md](referencias/aprendizajes.md).
   (`python3 herramientas/generar_glifos.py`).
 
 Tipografías de la galería: SIL OFL 1.1 de sus autores (ver `motor/estilos/*/LICENCIAS.md`). QR: qrcode-generator (MIT).
+Las composiciones siguen el formato abierto de HyperFrames (HeyGen, Apache-2.0); el motor que
+las reproduce es propio. Los bloques que se importan de su catálogo conservan su licencia
+(quedan anotados en `proyecto/composiciones/LICENCIAS.md`).
 
 ## Licencia
 

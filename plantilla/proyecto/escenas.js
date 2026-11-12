@@ -117,6 +117,10 @@ window.ESCENAS = [
     notas: 'Una escena libre: el HTML lo escribe el agente. Lo de antes se tacha cuando llega lo nuevo; el sello es un movimiento propio (proyecto/tipos.js).',
   },
   {
+    tipo: 'composicion', composicion: 'formatos', encaje: 'cubrir', mantener: 7, transicion: 'corte',
+    notas: 'Lo que no tiene forma de escena va en una composición (proyecto/composiciones/, formato HyperFrames): GSAP, CSS, three.js, video… Esta es solo CSS. También se exporta sola: tramoya video proyecto/composiciones/formatos.html.',
+  },
+  {
     tipo: 'cita', mantener: 7, coreografia: 'editorial',
     texto: 'Mirá el resultado en un *navegador real* antes de darlo por hecho.',
     autor: 'Regla de la casa', rol: 'referencias/aprendizajes.md',

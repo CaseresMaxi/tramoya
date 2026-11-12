@@ -7,6 +7,11 @@
 //   window.DURACION   duración total en segundos
 //   window.CLAVES     opcional: [{ v, ...etiquetas }] instantes para revisar
 //   window.renderAudio  opcional: async () → WAV en base64
+//   window.TAMANO     opcional: { ancho, alto } del escenario (si no, 1920 × 1080)
+//   window.FPS        opcional: cuadros por segundo por defecto
+//   window.PISTAS     opcional: [{ src, inicio, dur, recorte, velocidad, volumen, fadeIn, fadeOut }]
+//                     audio que ffmpeg mezcla al exportar (las composiciones lo arman solas)
+// seek(t) puede devolver una promesa (p. ej., mientras un video llega al cuadro justo).
 import { createRequire } from 'node:module';
 import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -40,20 +45,29 @@ export function args(argv = process.argv.slice(2)) {
 }
 
 // Abre una página del repo. ruta: relativa a la raíz (motion/index.html) · query: sin el "?"
-export async function abrir(ruta, { query = 'render', ancho = 1920, alto = 1080, escala = 1 } = {}) {
-  const browser = await chromium.launch({ executablePath: chrome(), args: ['--force-color-profile=srgb', '--allow-file-access-from-files'] });
+export async function abrir(ruta, { query = 'render', ancho = 1920, alto = 1080, escala = 1, fijo = false, browser: b0 = null } = {}) {
+  const browser = b0 || await lanzar();
   const page = await browser.newPage({ viewport: { width: ancho, height: alto }, deviceScaleFactor: escala });
   const errores = [];
   page.on('console', (m) => { if (m.type() === 'error') errores.push(m.text()); });
   page.on('pageerror', (e) => errores.push(e.message));
-  page.on('requestfailed', (r) => errores.push(`No cargó: ${r.url()}`));
+  // Chrome corta pedidos de video y audio a propósito (pide por rangos): eso no es un error
+  page.on('requestfailed', (r) => { if (r.resourceType() === 'media' && /ABORTED/.test(r.failure()?.errorText || '')) return; errores.push(`No cargó: ${r.url()}`); });
   query = String(query || '');
   const url = pathToFileURL(join(RAIZ, ruta)).href + (query ? (query.startsWith('#') ? query : '?' + query) : '');
   await page.goto(url);
   await page.waitForFunction(() => window.ready !== undefined, null, { timeout: 15000 }).catch(() => {});
   await page.evaluate(() => window.ready);
-  return { browser, page, errores };
+  // Una pieza que no es 1920 × 1080 (una composición vertical, cuadrada…) dice su tamaño
+  const tam = await page.evaluate(() => window.TAMANO || null);
+  if (tam && (tam.ancho !== ancho || tam.alto !== alto) && !fijo) {
+    await page.setViewportSize({ width: Math.round(tam.ancho), height: Math.round(tam.alto) });
+    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => r())));
+  }
+  return { browser, page, errores, ancho: tam?.ancho || ancho, alto: tam?.alto || alto };
 }
+
+export const lanzar = () => chromium.launch({ executablePath: chrome(), args: ['--force-color-profile=srgb', '--allow-file-access-from-files', '--autoplay-policy=no-user-gesture-required'] });
 
 export function informarErrores(errores) {
   if (!errores.length) { console.log('Consola: sin errores.'); return; }

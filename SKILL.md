@@ -33,6 +33,7 @@ node herramientas/tramoya.mjs <comando>              # desde adentro de un proye
 | `estado` (`--json`) | Qué editó el usuario, sus **pedidos** desde el tablero y las **correcciones** pendientes |
 | `revisar <pieza>` | Un PNG por punto clave en `salida/revision/<pieza>/` + errores de consola (código 1 si hay) |
 | `video <motion\|reel>` · `poster [--pagina ruta]` · `marca` | MP4 · PNG 300 dpi + PDF (`--pagina ruta`: la hoja de ruta de la presentación) · SVG/PNG del logo, en `salida/` (marca: `proyecto/assets/logo/`) |
+| `composicion nueva <id>` · `composicion importar <x.html\|carpeta\|hf:bloque>` · `composiciones` | **Composiciones** con el formato de HyperFrames (GSAP, CSS, Lottie, three.js, video y audio): crear, traer un bloque del catálogo de HyperFrames o un HTML, listar. Se revisan y exportan como `revisar` / `video proyecto/composiciones/<id>.html` |
 | `historial [pieza] [--guardar]` · `restaurar <pieza> [n]` | Versiones anteriores de lo editado (`proyecto/estado/.historial/`) · volver a una (la actual queda guardada) |
 | `empaquetar` · `importar <zip>` · `actualizar` | Llevar el trabajo (zip) · traerlo · ponerle el motor nuevo |
 | `doctor` | Revisa Node, Chrome, ffmpeg y playwright-core |
@@ -80,6 +81,10 @@ o en `./tramoya`.
      (`TIPOS_REEL`) y movimientos propios, cuando el contenido los pide.
    - Reel: cada parte con la `entrada` que pida su frase; `ilustracion` para un dibujo
      a medida. Landing: secciones `libre` cuando ninguna de las tres sirve.
+   - `proyecto/composiciones/`: lo que no tiene forma de escena ni de parte (un spot
+     vertical, un gráfico con d3, una escena 3D, un bloque del catálogo de HyperFrames, un
+     montaje con video y audio). Va solo a MP4 o entra a la presentación como escena
+     `composicion`. Ver `referencias/composiciones.md`.
 5. **Mirar el resultado, siempre.** `tramoya revisar motion` (y `reel`, `poster`,
    `landing`, `marca`). Abrí los PNG y miralos de verdad: textos que desbordan,
    solapados, contraste, jerarquía, cortes feos. Leé también la **partitura**
@@ -156,7 +161,9 @@ Lo editado en el navegador vive en `proyecto/estado/<pieza>.json` (`motion`, `re
   `actualizar` lo pisa. Lo propio va en `proyecto/` (un tipo en `proyecto/tipos.js`, una
   variante en `marca.variantes`, un reel distinto en otro `.html` que use `reel/reel.js`).
 - **Todo es función del tiempo**: nada de animaciones CSS ni timers en escenas y reels;
-  cada cuadro sale de `seek(t)`. Así se pausa, se rebobina y se renderiza igual.
+  cada cuadro sale de `seek(t)`. Así se pausa, se rebobina y se renderiza igual (y en
+  varios hilos: `video --hilos N`). `revisar` lo comprueba («Determinismo»). En una
+  composición, GSAP en pausa o `@keyframes` sí: el motor los busca en el tiempo.
 - Rutas de assets en los datos: relativas a las páginas (`../proyecto/assets/img/x.webp`).
 - Texto: `*palabra*` va en color de acento. El escenario mide 1920 × 1080; el póster, un
   A1 en px CSS (2245 × 3179).
@@ -177,6 +184,7 @@ Lo editado en el navegador vive en `proyecto/estado/<pieza>.json` (`motion`, `re
 ## Referencias (leelas cuando las necesites)
 
 - `referencias/movimiento.md`: **cómo decidir el movimiento según el contenido**: la partitura, el repertorio (entradas, acentos, bucles, coreografías, transiciones), cuándo usar cada uno, cómo crear uno nuevo y qué evitar.
+- `referencias/composiciones.md`: composiciones con el formato de HyperFrames: comandos, formato, qué se mueve con el tiempo, reglas, el catálogo, como escena, hilos.
 - `referencias/motion.md`: presentación: atajos, URL, campos de escena, tipos (y `libre`), atributos de animación, contrato de render.
 - `referencias/piezas.md`: reel (partes, tipos, banda), póster, landing, marca y los comandos de render.
 - `referencias/estilos.md`: estilos: formato, cada perilla, la galería y cómo crear uno a partir de referencias.

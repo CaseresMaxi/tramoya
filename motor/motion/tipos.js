@@ -11,6 +11,8 @@
 //   render(d, ctx)  HTML de la escena · ctx.logo(tamaño) · ctx.n (número de escena)
 //   tick(raíz, t)   se llama en cada cuadro con el tiempo ambiente (señales, monitores…)
 //   onHold / onLeave(raíz)  al detenerse en un punto clave de la escena / al irse
+//   reloj(raíz, t, { render })  t = segundos desde que la escena aparece (corre también en las
+//              pausas); puede devolver una promesa (al exportar se espera): composiciones, video
 //   css        estilos propios del tipo (se instalan una vez)
 //
 // Atributos que lee el motor en el HTML:
@@ -350,6 +352,62 @@
       const html = String(d.html || '').replace(/\{\{\s*img:([\w-]+)\s*\}\}/g, (_, k) => esc(d[k] ?? '')).replace(/\{\{\s*([\w-]+)\s*\}\}/g, (_, k) => (k === 'kicker' ? kicker(d) : k === 'titulo' ? titulo(d) : md(d[k] ?? '')));
       return `${d.css ? `<style>${d.css}</style>` : ''}${html}`;
     },
+  };
+
+  // Una composición (proyecto/composiciones/, formato HyperFrames) como escena: corre con el
+  // reloj de la escena (desde que entra, también durante las pausas) y se exporta cuadro por
+  // cuadro. kicker y título opcionales, encima.
+  const COMP = () => (window.MANIFIESTO?.composiciones || []);
+  const compDe = (d) => COMP().find((c) => c.id === d.composicion) || (d.composicion ? { id: d.composicion, ruta: `../proyecto/composiciones/${d.composicion}.html`, ancho: 1920, alto: 1080 } : null);
+  TIPOS.composicion = {
+    nombre: 'Composición (HyperFrames)',
+    campos: [KT, TT,
+      ['composicion', 'select', 'Composición (proyecto/composiciones/)', () => ({ '': '— elegir —', ...Object.fromEntries(COMP().map((c) => [c.id, `${c.titulo || c.id} · ${c.ancho}×${c.alto}${c.dur ? ` · ${c.dur} s` : ''}`])) })],
+      ['encaje', 'select', 'Cómo entra en la pantalla', { '': 'Entera (con bordes si no es 16:9)', cubrir: 'Cubre la pantalla (recorta)', marco: 'En un marco, con el título al lado' }],
+      ['desde', 'number', 'Empieza en el segundo'],
+      ['velocidad', 'number', 'Velocidad (1 = normal)'],
+      ['variables', 'area', 'Variables (JSON: {"titulo": "…"})']],
+    ejemplo: { composicion: '' },
+    pasos: 'todo',
+    render: (d) => {
+      const c = compDe(d);
+      if (!c) return `<div class="pad center">${kicker(d)}<h2 class="title" data-f="composicion">Elegí una composición (tramoya composicion nueva / importar)</h2></div>`;
+      const q = new URLSearchParams(location.search).has('render') ? 'render&ui=0' : 'embebida&ui=0';
+      let vars = '';
+      if (d.variables) { try { vars = '&vars=' + encodeURIComponent(JSON.stringify(typeof d.variables === 'string' ? JSON.parse(d.variables) : d.variables)); } catch (e) { vars = ''; } }
+      const marco = d.encaje === 'marco', ar = c.ancho / c.alto, H = marco ? Math.min(820, 1100 / ar) : 1080, W = marco ? H * ar : 1920;
+      const s = d.encaje === 'cubrir' ? Math.max(W / c.ancho, H / c.alto) : Math.min(W / c.ancho, H / c.alto);
+      const frame = `<div class="comp-vista" data-f="composicion" data-k="hero" data-shape="box" data-m="${marco ? 'zoom' : 'fade'}" data-dur=".8" style="width:${W}px;height:${H}px">
+          <iframe src="${esc(c.ruta)}?${q}${vars}" data-desde="${+d.desde || 0}" data-vel="${+d.velocidad || 1}" style="width:${c.ancho}px;height:${c.alto}px;transform:translate(-50%,-50%) scale(${s.toFixed(5)})" scrolling="no" tabindex="-1"></iframe></div>`;
+      if (marco) return `<div class="pad comp-marco"><div>${kicker(d)}${d.titulo ? titulo(d, 0.12, 'md') : ''}</div>${frame}</div>`;
+      return `${frame}${d.kicker || d.titulo ? `<div class="pad comp-sobre">${kicker(d)}${d.titulo ? titulo(d, 0.12, 'md') : ''}</div>` : ''}`;
+    },
+    // t: segundos desde que la escena aparece. Devuelve una promesa si la composición todavía carga
+    reloj(root, t) {
+      const f = root.querySelector('.comp-vista iframe');
+      if (!f) return;
+      const w = f.contentWindow, tt = Math.max(0, t * (+f.dataset.vel || 1) + (+f.dataset.desde || 0));
+      try {
+        if (typeof w?.seek === 'function') return w.seek(tt);
+        if (w?.ready) return Promise.resolve(w.ready).then(() => w.seek?.(tt));
+        return new Promise((r) => { f.addEventListener('load', () => Promise.resolve(w.ready).then(() => r(f.contentWindow.seek?.(tt))), { once: true }); setTimeout(r, 15000); });
+      } catch (e) { /* otra origen: no se puede mover desde acá */ }
+    },
+    css: `
+      .comp-vista { position: absolute; left: 0; top: 0; overflow: hidden; }
+      .comp-vista iframe { position: absolute; left: 50%; top: 50%; border: 0; transform-origin: 50% 50%; pointer-events: none; background: transparent; }
+      .comp-marco { display: grid; grid-template-columns: 1fr auto; gap: 80px; align-items: center; }
+      .comp-marco .comp-vista { position: relative; border-radius: 18px; box-shadow: 0 30px 80px rgba(0,0,0,.35); }
+      .comp-sobre { pointer-events: none; }`,
+  };
+  // El video, al exportar: el cuadro justo según el reloj de la escena (al mirar, corre en la pausa)
+  TIPOS.video.reloj = (root, t, { render } = {}) => {
+    const v = root.querySelector('video');
+    if (!render || !v || !v.currentSrc) return;
+    const loc = Math.max(0, Math.min((v.duration || Infinity) - 0.01, t - 0.5));
+    if (Math.abs(v.currentTime - loc) < 0.004) return;
+    v.pause();
+    return new Promise((r) => { const fin = () => { v.removeEventListener('seeked', fin); r(); }; v.addEventListener('seeked', fin); setTimeout(fin, 3000); v.currentTime = loc; });
   };
 
   // El indicador de "señales" viaja en un data-attribute (tick no recibe los datos)

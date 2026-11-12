@@ -17,10 +17,11 @@ este archivo es para trabajar *en* la skill.
 | `motor/nucleo/util.js` | Curvas, colores, texto, **estado** (`leer`/`guardar`/`borrar`: `proyecto/estado.js` + localStorage + servidor), fuentes y temas |
 | `motor/motion/` · `reel/` · `poster/` · `landing/` · `marca/` | Cada pieza con su editor |
 | `motor/motion/movimientos.js` | Repertorio abierto de movimientos (entradas, acentos, bucles) y coreografías por rol; `motor.js` los resuelve por escena (`mov`, `coreografia`, `transicion`) y publica `window.PARTITURA`, que `revisar` vuelve `partitura.md` con avisos de repetición |
-| `motor/render/*.mjs` | Revisión, video, póster, marca (Playwright + Chrome headless) |
+| `motor/nucleo/composicion.js` + `motor/herramientas/composiciones.mjs` | Composiciones con el formato de HyperFrames (`proyecto/composiciones/`): el motor que las busca en el tiempo (GSAP, CSS/WAAPI, Lottie, anime, `hf-seek`, video y audio), su vista con variables, y los comandos `composicion nueva/importar/local`. En la presentación, el tipo `composicion` (gancho `reloj` de los tipos) |
+| `motor/render/*.mjs` | Revisión (+ determinismo y formato de composición), video (hilos, `PISTAS` de audio), póster, marca (Playwright + Chrome headless) |
 | `motor/estilos/` | Galería: `<id>/estilo.js` + `fuentes/` (OFL) y `index.html`. Ningún estilo por defecto: sin elegir, el neutro de `util.js`. Formato y perillas en `referencias/estilos.md` |
 | `plantilla/proyecto/` | Proyecto de ejemplo que copia `nuevo` (solo contenido; el look sale del estilo) |
-| `referencias/` | Docs que el agente lee bajo demanda: `movimiento.md`, `motion.md`, `piezas.md`, `estilos.md`, `aprendizajes.md` |
+| `referencias/` | Docs que el agente lee bajo demanda: `movimiento.md`, `composiciones.md`, `motion.md`, `piezas.md`, `estilos.md`, `aprendizajes.md` |
 
 ## Reglas
 
@@ -44,7 +45,7 @@ este archivo es para trabajar *en* la skill.
   meter contenido en una forma. Un movimiento nuevo va al registro (`registrarMovimiento`),
   no a un `switch`; los tipos marcan roles y campos, y la escena decide cómo se mueven. Si
   algo solo se puede hacer con un tipo, falta una puerta (`libre`, `mov`, un campo).
-- **Contrato de render** (`window.ready`, `seek`, `DURACION`, `CLAVES`, `renderAudio`):
+- **Contrato de render** (`window.ready`, `seek` —puede devolver una promesa—, `DURACION`, `CLAVES`, `renderAudio`, `TAMANO`, `FPS`, `PISTAS`):
   ver `motor/render/comun.mjs`.
 
 ## Cómo probar

@@ -1,0 +1,53 @@
+<!doctype html>
+<!-- Composición de ejemplo (formato HyperFrames, ver referencias/composiciones.md).
+     Solo CSS @keyframes, sin librerías: el motor las busca en el tiempo, relativas a su clip.
+     Tres formatos que se dibujan uno tras otro; el último se queda latiendo. -->
+<html lang="es" data-tramoya-estilo
+  data-composition-variables='[
+    { "id": "titulo", "type": "string", "label": "Título", "default": "Cualquier formato, el mismo proyecto." },
+    { "id": "ancho", "type": "string", "label": "Rótulo 16:9", "default": "Presentación" },
+    { "id": "cuadrado", "type": "string", "label": "Rótulo 1:1", "default": "Post" },
+    { "id": "vertical", "type": "string", "label": "Rótulo 9:16", "default": "Historia" }
+  ]'>
+<head>
+<!-- tramoya -->
+<script src="../../nucleo/util.js"></script>
+<script src="../proyecto.js"></script>
+<script src="../estilo/estilo.js"></script>
+<script src="../estado.js"></script>
+<script src="../../nucleo/composicion.js"></script>
+<!-- /tramoya -->
+  <meta charset="utf-8" />
+  <title>Formatos</title>
+  <style>
+    html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: var(--bg, #111); color: var(--text, #eee); }
+    .clip { position: absolute; inset: 0; }
+    h1 { position: absolute; left: 160px; top: 170px; margin: 0; font: 800 76px/1.05 var(--font-display, Georgia, serif); letter-spacing: -0.02em; max-width: 1500px;
+         animation: sube .9s cubic-bezier(.2,.7,.2,1) .2s both; }
+    .fila { position: absolute; left: 160px; right: 160px; bottom: 230px; display: flex; align-items: flex-end; gap: 110px; }
+    .f { position: relative; border: 6px solid var(--text, #eee); border-radius: 14px; box-sizing: border-box; }
+    .f span { position: absolute; left: 0; bottom: -64px; font: 600 34px var(--font-body, system-ui, sans-serif); color: var(--muted, #999); white-space: nowrap; animation: aparece .5s ease-out both; }
+    .f i { position: absolute; inset: 0; border-radius: 8px; background: var(--accent, #e0b04a); opacity: .9; transform-origin: 0 100%; animation: llena .8s cubic-bezier(.6,0,.2,1) both; }
+    .a { width: 560px; height: 315px; animation: dibuja .7s cubic-bezier(.2,.7,.2,1) 1.0s both; } .a i { animation-delay: 1.5s; } .a span { animation-delay: 1.5s; }
+    .b { width: 315px; height: 315px; animation: dibuja .7s cubic-bezier(.2,.7,.2,1) 1.6s both; } .b i { animation-delay: 2.1s; } .b span { animation-delay: 2.1s; }
+    .c { width: 236px; height: 420px; animation: dibuja .7s cubic-bezier(.2,.7,.2,1) 2.2s both, late 1.2s ease-in-out 3.6s 3 forwards; } .c i { animation-delay: 2.7s; } .c span { animation-delay: 2.7s; }
+    @keyframes sube { from { opacity: 0; transform: translateY(50px); } to { opacity: 1; transform: none; } }
+    @keyframes aparece { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes dibuja { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
+    @keyframes llena { from { transform: scaleY(0); } to { transform: scaleY(.18); } }
+    @keyframes late { 0%, 100% { transform: none; } 50% { transform: scale(1.04); } }
+  </style>
+</head>
+<body>
+  <div id="raiz" data-composition-id="formatos" data-start="0" data-duration="8" data-width="1920" data-height="1080" data-fps="30" data-no-timeline>
+    <section id="formatos-a" class="clip" data-start="0" data-duration="8">
+      <h1 data-var-text="titulo">Cualquier formato, el mismo proyecto.</h1>
+      <div class="fila">
+        <div class="f a"><i></i><span data-var-text="ancho">Presentación</span></div>
+        <div class="f b"><i></i><span data-var-text="cuadrado">Post</span></div>
+        <div class="f c"><i></i><span data-var-text="vertical">Historia</span></div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

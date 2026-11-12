@@ -46,7 +46,7 @@ Campos comunes:
 
 | Campo | Qué es |
 |-------|--------|
-| `tipo` | Nombre del tipo (`portada`, `texto`, `tarjetas`, `flujo`, `imagen`, `senales`, `codigo`, `columnas`, `cifra`, `video`, `cita`, `cierre`, `libre` (HTML a medida), o uno propio) |
+| `tipo` | Nombre del tipo (`portada`, `texto`, `tarjetas`, `flujo`, `imagen`, `senales`, `codigo`, `columnas`, `cifra`, `video`, `cita`, `cierre`, `libre` (HTML a medida), `composicion` (una de `proyecto/composiciones/`, ver `composiciones.md`), o uno propio) |
 | `mantener` | Segundos de pausa en automático y en el video (se reparte entre los pasos) |
 | `notas` | Notas del presentador (N) |
 | `pasos` | `'uno'` (cada avance revela un punto) o `'todo'`; por defecto, el del tipo |

@@ -63,7 +63,16 @@
     { id: 'marca', nombre: 'Marca', ruta: 'marca/index.html', editor: 'marca/index.html', w: 1440, h: 900, logo: true, estado: ['marca-editor', 'marca-variantes'],
       desc: 'Logo paramétrico con variantes con nombre. SVG, PNG y zip.', teclas: 'La página es el editor: parámetros y variantes' },
   ];
+  // Composiciones (proyecto/composiciones/, formato HyperFrames): una pieza cada una
+  (window.MANIFIESTO?.composiciones || []).forEach((c) => {
+    const ruta = String(c.ruta).replace(/^\.\.\//, '');
+    PIEZAS.push({ id: 'comp-' + c.id, nombre: c.titulo || c.id, ruta, editor: ruta, w: c.ancho, h: c.alto, estado: ['composicion-' + c.id], comp: true,
+      desc: `Composición${c.dur ? ` de ${c.dur} s` : ''}, ${c.ancho}×${c.alto} (formato HyperFrames: GSAP, CSS, Lottie, three.js…). Va sola a MP4 o como escena de la presentación.`,
+      teclas: '<kbd>Espacio</kbd> reproduce · <kbd>←</kbd> <kbd>→</kbd> cuadro a cuadro · Variables abajo a la derecha',
+      mini: () => '?render', t: (w) => (w.DURACION || 0) * 0.6, exportar: `video ${ruta}` });
+  });
   const editada = (p) => p.estado.some((s) => U.leer(s) != null);
+  const optsComp = () => PIEZAS.filter((p) => p.comp).map((p) => `<option value="${esc(p.ruta)}">Composición: ${esc(p.nombre)}</option>`).join('');
   // Iframe escalado de una pieza: cubre la caja (o se ajusta adentro, con contener)
   function escalar(caja, ifr, w, h, { arriba = false, contener = false } = {}) {
     const cw = caja.clientWidth, ch = caja.clientHeight; if (!cw || !ch) return;
@@ -84,7 +93,7 @@
       ifr.loading = 'lazy'; ifr.tabIndex = -1; ifr.setAttribute('aria-hidden', 'true'); ifr.style.opacity = 0;
       ifr.src = p.ruta + (p.mini ? p.mini() : '');
       caja.appendChild(ifr);
-      const ajustar = () => escalar(caja, ifr, p.w, p.h, { arriba: p.arriba });
+      const ajustar = () => escalar(caja, ifr, p.w, p.h, { arriba: p.arriba, contener: p.comp });
       ajustar(); new ResizeObserver(ajustar).observe(caja);
       ifr.onload = async () => {
         try {
@@ -109,7 +118,7 @@
       const el = nodo(`<article class="pieza">
         <a class="mini" href="${p.ruta}" title="Abrir ${esc(p.nombre)}"></a>
         <div class="cuerpo">
-          <div class="tit"><b>${esc(p.nombre)}</b>${editada(p) ? '<span class="chip acento" title="Tiene cambios hechos en su editor (proyecto/estado/)">editada</span>' : ''}</div>
+          <div class="tit"><b>${esc(p.nombre)}</b>${p.comp ? '<span class="chip">composición</span>' : ''}${editada(p) ? '<span class="chip acento" title="Tiene cambios hechos en su editor (proyecto/estado/)">editada</span>' : ''}</div>
           <p>${p.desc}</p>
           <p class="nota">${p.teclas}</p>
           <div class="acc"><a class="btn pri" href="${p.ruta}">Abrir</a>${p.editor !== p.ruta ? `<a class="btn" href="${p.editor}">Abrir el editor</a>` : ''}${p.exponer ? `<a class="btn" href="${p.exponer}" title="La presentación sin las pausas de cada paso: cada avance corre la escena entera">Exponer</a>` : ''}<a class="btn" href="${p.ruta}" target="_blank" rel="noopener">Pestaña nueva</a></div>
@@ -435,11 +444,11 @@
       <div id="diagAviso"></div>
       <div class="acciones">
         <form class="accion" data-cmd="revisar"><b>Revisar</b><p>Un PNG por punto clave y los errores de consola. Lo primero antes de exportar.</p>
-          <div class="fila"><select name="pieza"><option value="motion">Presentación</option><option value="reel">Reel</option><option value="poster">Póster</option><option value="landing">Landing</option><option value="marca">Marca</option></select></div>
+          <div class="fila"><select name="pieza"><option value="motion">Presentación</option><option value="reel">Reel</option><option value="poster">Póster</option><option value="landing">Landing</option><option value="marca">Marca</option>${optsComp()}</select></div>
           <div class="fila"><input type="text" name="query" placeholder="Un instante: escena=4&amp;paso=2&amp;ui=0 (opcional)"></div>
           <button class="btn pri">Revisar</button></form>
-        <form class="accion" data-cmd="video"><b>Video (MP4)</b><p>La presentación como video o el reel con su música.</p>
-          <div class="fila"><select name="pieza"><option value="motion">Presentación</option><option value="reel">Reel</option></select><select name="calidad"><option value="final">Final (60 fps)</option><option value="rapida">Rápida (30 fps)</option></select></div>
+        <form class="accion" data-cmd="video"><b>Video (MP4)</b><p>La presentación como video, el reel con su música o una composición (con su tamaño y su audio).</p>
+          <div class="fila"><select name="pieza"><option value="motion">Presentación</option><option value="reel">Reel</option>${optsComp()}</select><select name="calidad"><option value="final">Final (60 fps)</option><option value="rapida">Rápida (30 fps)</option></select></div>
           <div class="fila"><label class="chk">Pausa máx. en la presentación <input type="number" name="pausaMax" value="3" min="0" step="0.5" style="width:70px"> s</label></div>
           <button class="btn pri">Exportar video</button></form>
         <form class="accion" data-cmd="poster"><b>Póster</b><p>PNG para imprimir y PDF vectorial: el póster o la hoja de ruta.</p>
